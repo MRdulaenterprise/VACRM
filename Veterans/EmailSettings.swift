@@ -24,6 +24,14 @@ struct SettingsView: View {
     @State private var openAITestConnectionStatus: ConnectionStatus = .idle
     @State private var openAISaveStatus: String = ""
     
+    // VA.GOV Settings
+    @StateObject private var vaGovService = VAGovAPIService()
+    @State private var showVAGovAPIKeyAlert: Bool = false
+    @State private var newVAGovAPIKey: String = ""
+    @State private var vaGovEnvironment: String = "sandbox"
+    @State private var vaGovTestConnectionStatus: ConnectionStatus = .idle
+    @State private var vaGovSaveStatus: String = ""
+    
     enum ConnectionStatus {
         case idle, testing, success, failure
     }
@@ -281,6 +289,128 @@ struct SettingsView: View {
                         .cornerRadius(8)
                     }
                     
+                    Divider()
+                    
+                    // MARK: - VA.GOV API Configuration
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("VA.GOV API Configuration")
+                            .font(.headline)
+                        
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Text("API Key")
+                                    .font(.headline)
+                                
+                                Spacer()
+                                
+                                Button("Change") {
+                                    vaGovSaveStatus = ""
+                                    showVAGovAPIKeyAlert = true
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
+                            }
+                            
+                            HStack {
+                                Text("Status:")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                
+                                Text(vaGovService.hasAPIKey() ? "Configured" : "Not configured")
+                                    .font(.caption)
+                                    .foregroundColor(vaGovService.hasAPIKey() ? .green : .orange)
+                                
+                                Spacer()
+                                
+                                Image(systemName: vaGovService.hasAPIKey() ? "checkmark.circle.fill" : "exclamationmark.triangle")
+                                    .foregroundColor(vaGovService.hasAPIKey() ? .green : .orange)
+                            }
+                            
+                            if !vaGovSaveStatus.isEmpty {
+                                Text(vaGovSaveStatus)
+                                    .font(.caption)
+                                    .foregroundColor(vaGovSaveStatus.contains("Error") ? .red : .green)
+                            }
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Environment")
+                                .font(.headline)
+                            
+                            Picker("Environment", selection: $vaGovEnvironment) {
+                                Text("Sandbox").tag("sandbox")
+                                Text("Production").tag("production")
+                            }
+                            .pickerStyle(.segmented)
+                            .onChange(of: vaGovEnvironment) { _, newValue in
+                                let environment = VAGovAPIService.Environment(rawValue: newValue) ?? .sandbox
+                                vaGovService.setEnvironment(environment)
+                            }
+                        }
+                        
+                        // VA.GOV Connection Test
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Connection Test")
+                                .font(.headline)
+                            
+                            HStack {
+                                Button("Test Connection") {
+                                    testVAGovConnection()
+                                }
+                                .buttonStyle(.bordered)
+                                .disabled(vaGovTestConnectionStatus == .testing || !vaGovService.hasAPIKey())
+                                
+                                Spacer()
+                                
+                                if vaGovTestConnectionStatus == .testing {
+                                    ProgressView()
+                                        .controlSize(.small)
+                                } else {
+                                    Image(systemName: vaGovTestConnectionStatus == .success ? "checkmark.circle.fill" : "xmark.circle.fill")
+                                        .foregroundColor(vaGovTestConnectionStatus == .success ? .green : .red)
+                                }
+                            }
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Configuration Details")
+                                .font(.headline)
+                            
+                            HStack {
+                                Text("Environment:")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                Spacer()
+                                Text(vaGovEnvironment == "sandbox" ? "Sandbox" : "Production")
+                                    .font(.caption)
+                                    .foregroundColor(.primary)
+                            }
+                            
+                            HStack {
+                                Text("Base URL:")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                Spacer()
+                                Text(vaGovEnvironment == "sandbox" ? "https://sandbox-api.va.gov" : "https://api.va.gov")
+                                    .font(.caption)
+                                    .foregroundColor(.primary)
+                            }
+                            
+                            HStack {
+                                Text("API Key:")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                Spacer()
+                                Text(vaGovService.hasAPIKey() ? "Configured" : "Not configured")
+                                    .font(.caption)
+                                    .foregroundColor(vaGovService.hasAPIKey() ? .green : .orange)
+                            }
+                        }
+                        .padding()
+                        .background(Color(NSColor.controlBackgroundColor))
+                        .cornerRadius(8)
+                    }
+                    
                     // MARK: - Usage Information
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Usage Information")
@@ -362,6 +492,15 @@ struct SettingsView: View {
         } message: {
             Text("Enter your new PaulBox API key. This will be stored securely in the macOS Keychain.")
         }
+        .alert("Change VA.GOV API Key", isPresented: $showVAGovAPIKeyAlert) {
+            SecureField("New VA.GOV API Key", text: $newVAGovAPIKey)
+            Button("Cancel", role: .cancel) { }
+            Button("Save") {
+                saveVAGovAPIKey()
+            }
+        } message: {
+            Text("Enter your new VA.GOV API key. This will be stored securely in the macOS Keychain.")
+        }
             .onAppear {
                 loadSettings()
             }
@@ -371,6 +510,11 @@ struct SettingsView: View {
         private func loadSettings() {
             // Load PaulBox API key from Keychain
             paulBoxAPIKey = loadPaulBoxAPIKeyFromKeychain()
+            
+            // Load VA.GOV environment
+            vaGovEnvironment = UserDefaults.standard.string(forKey: "vaGovEnvironment") ?? "sandbox"
+            let environment = VAGovAPIService.Environment(rawValue: vaGovEnvironment) ?? .sandbox
+            vaGovService.setEnvironment(environment)
             
             // Load other settings from UserDefaults
             fromEmail = UserDefaults.standard.string(forKey: "emailFromAddress") ?? "matt@mrdula.co"
@@ -385,6 +529,7 @@ struct SettingsView: View {
             // Save settings to UserDefaults
             UserDefaults.standard.set(fromEmail, forKey: "emailFromAddress")
             UserDefaults.standard.set(domain, forKey: "emailDomain")
+            UserDefaults.standard.set(vaGovEnvironment, forKey: "vaGovEnvironment")
             UserDefaults.standard.set(enableNotifications, forKey: "emailNotificationsEnabled")
             UserDefaults.standard.set(enableClaimNotifications, forKey: "emailClaimNotificationsEnabled")
             UserDefaults.standard.set(enableDocumentNotifications, forKey: "emailDocumentNotificationsEnabled")
@@ -463,6 +608,42 @@ struct SettingsView: View {
                         print("PaulBox test connection failed: \(error)")
                     }
                 }
+            }
+        }
+    
+        private func testVAGovConnection() {
+            print("🧪 Testing VA.GOV connection...")
+            vaGovTestConnectionStatus = .testing
+            
+            Task.detached {
+                do {
+                    let isValid = try await vaGovService.testConnection()
+                    
+                    await MainActor.run {
+                        vaGovTestConnectionStatus = isValid ? .success : .failure
+                        print("🧪 VA.GOV test result: \(isValid ? "SUCCESS" : "FAILURE")")
+                    }
+                } catch {
+                    await MainActor.run {
+                        vaGovTestConnectionStatus = .failure
+                        print("❌ VA.GOV test connection failed: \(error)")
+                    }
+                }
+            }
+        }
+    
+        private func saveVAGovAPIKey() {
+            guard !newVAGovAPIKey.isEmpty else {
+                vaGovSaveStatus = "Error: API key cannot be empty"
+                return
+            }
+            
+            do {
+                try vaGovService.storeAPIKey(newVAGovAPIKey)
+                vaGovSaveStatus = "VA.GOV API key saved successfully"
+                newVAGovAPIKey = ""
+            } catch {
+                vaGovSaveStatus = "Error saving VA.GOV API key: \(error.localizedDescription)"
             }
         }
     
@@ -578,4 +759,5 @@ enum EmailNotificationType: String, CaseIterable {
 // MARK: - Preview
 #Preview {
     SettingsView()
+}
 }
