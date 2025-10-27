@@ -158,8 +158,8 @@ class CopilotDocumentService: ObservableObject {
                 processingProgress = 0.6
             }
             
-               // Apply de-identification using GPT-4 approach
-               let deidentificationResult = await deidentificationService.deidentifyWithGPT4(text: extractedText)
+               // Apply de-identification using GPT-4 approach (documents should always be fully de-identified)
+               let deidentificationResult = await deidentificationService.deidentifyWithGPT4(text: extractedText, context: .documentUpload)
                chatDocument.deidentifiedText = deidentificationResult.deidentifiedText
             
             await MainActor.run {

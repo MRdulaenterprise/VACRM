@@ -279,9 +279,9 @@ struct CopilotSettingsView: View {
                 .font(.system(size: 14, weight: .semibold))
             
             VStack(alignment: .leading, spacing: 8) {
-                Toggle("Enable De-identification", isOn: $enableDeidentification)
+                Toggle("Enable Smart De-identification", isOn: $enableDeidentification)
                     .font(.system(size: 11))
-                    .help("Automatically detect and redact PHI/PII before sending to OpenAI")
+                    .help("Automatically detect and redact actual PHI while allowing hypothetical case discussions")
                 
                 if enableDeidentification {
                     Toggle("Use GPT-4 De-identification", isOn: $useGPT4Deidentification)

@@ -19,6 +19,14 @@ class DeIdentificationService {
     
     // OpenAI service for GPT-4 de-identification
     private let openAIService = OpenAIService()
+    
+    // MARK: - Deidentification Context
+    
+    enum DeidentificationContext {
+        case userQuery          // General questions - minimal de-identification
+        case veteranRecord      // Database records - full de-identification
+        case documentUpload     // Uploaded docs - full de-identification
+    }
 
     // Enhanced regex patterns based on DeID-GPT research
     private let phiPatterns: [NSRegularExpression] = [
@@ -72,40 +80,71 @@ class DeIdentificationService {
         // Hospital/Medical facility names (common patterns)
         try! NSRegularExpression(pattern: "\\b[A-Z][a-z]+\\s+(Hospital|Medical Center|Clinic|Health Center)\\b", options: .caseInsensitive),
     ]
+    
+    // MARK: - Smart Detection Methods
+    
+    /// Determines if text should be de-identified based on context and content
+    /// - Parameters:
+    ///   - text: The input text to analyze
+    ///   - context: The context in which the text is being used
+    /// - Returns: True if de-identification is needed, false otherwise
+    func shouldDeidentify(_ text: String, context: DeidentificationContext) async -> Bool {
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return false
+        }
+        
+        switch context {
+        case .userQuery:
+            // For user queries, only de-identify if obvious PHI is present
+            return containsObviousPHI(text)
+            
+        case .veteranRecord, .documentUpload:
+            // For records and documents, always de-identify
+            return true
+        }
+    }
+    
+    /// Checks for obvious PHI patterns that should always be redacted
+    /// - Parameter text: The text to check
+    /// - Returns: True if obvious PHI is detected
+    private func containsObviousPHI(_ text: String) -> Bool {
+        let obviousPHIPatterns = [
+            // Social Security Numbers
+            try! NSRegularExpression(pattern: "\\b\\d{3}-\\d{2}-\\d{4}\\b"),
+            // Full addresses with house numbers
+            try! NSRegularExpression(pattern: "\\b\\d{1,5}\\s[A-Z][a-z]+\\s(Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Lane|Ln|Drive|Dr|Court|Ct|Place|Pl)\\b", options: .caseInsensitive),
+            // Medical record numbers with prefixes
+            try! NSRegularExpression(pattern: "\\b(MRN|Medical Record Number|Patient ID):?\\s*[A-Z0-9]+\\b", options: .caseInsensitive),
+            // Specific phone numbers
+            try! NSRegularExpression(pattern: "\\b\\(?\\d{3}\\)?[\\s.-]?\\d{3}[\\s.-]?\\d{4}\\b"),
+            // Email addresses
+            try! NSRegularExpression(pattern: "\\b[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}\\b", options: .caseInsensitive),
+            // VA File Numbers
+            try! NSRegularExpression(pattern: "\\bVA\\s+File\\s+Number:?\\s*[A-Z0-9]+\\b", options: .caseInsensitive),
+        ]
+        
+        for pattern in obviousPHIPatterns {
+            let matches = pattern.matches(in: text, options: [], range: NSRange(location: 0, length: text.utf16.count))
+            if !matches.isEmpty {
+                return true
+            }
+        }
+        
+        return false
+    }
 
     /// De-identifies text using GPT-4 approach (DeID-GPT method)
-    /// - Parameter text: The input string potentially containing PHI/PII
+    /// - Parameters:
+    ///   - text: The input string potentially containing PHI/PII
+    ///   - context: The context in which de-identification is being performed
     /// - Returns: A tuple containing the de-identified string and a log of redactions
-    func deidentifyWithGPT4(text: String) async -> (deidentifiedText: String, redactionLog: String) {
+    func deidentifyWithGPT4(text: String, context: DeidentificationContext = .userQuery) async -> (deidentifiedText: String, redactionLog: String) {
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             return (text, "No PHI/PII detected or redacted.")
         }
         
-        // Create a comprehensive prompt for GPT-4 de-identification
-        let prompt = """
-        You are a HIPAA-compliant medical text de-identification expert. Your task is to identify and redact all Protected Health Information (PHI) from the following medical text while preserving the original structure and meaning.
-
-        PHI categories to identify and redact:
-        1. Names (patients, doctors, family members)
-        2. Professions (medical staff titles with names)
-        3. Locations (hospitals, cities, addresses)
-        4. Ages (patient ages)
-        5. Dates (visit dates, birth dates, admission/discharge dates)
-        6. Contacts (phone numbers, emails)
-        7. IDs (patient IDs, medical record numbers, SSNs)
-        8. Biometric identifiers
-        9. Any other unique identifying information
-
-        Instructions:
-        - Replace each PHI element with [REDACTED_PHI_X] where X is a sequential number
-        - Preserve the original text structure and medical meaning
-        - Only redact clear PHI, not general medical terms
-        - Maintain proper grammar and sentence flow
-        - Return only the de-identified text
-
-        Medical text to de-identify:
-        \(text)
-        """
+        // Create context-appropriate prompt for GPT-4 de-identification
+        let prompt = createDeidentificationPrompt(for: text, context: context)
         
         do {
             let messages = [
@@ -129,6 +168,60 @@ class DeIdentificationService {
             // Fallback to rule-based de-identification if GPT-4 fails
             print("GPT-4 de-identification failed, falling back to rule-based method: \(error)")
             return deidentify(text: text)
+        }
+    }
+    
+    /// Creates context-appropriate de-identification prompt
+    private func createDeidentificationPrompt(for text: String, context: DeidentificationContext) -> String {
+        switch context {
+        case .userQuery:
+            return """
+            You are assisting with HIPAA compliance. Review this text and ONLY redact ACTUAL protected health information:
+
+            DO REDACT:
+            - Social Security Numbers (XXX-XX-XXXX)
+            - Full street addresses with house numbers
+            - Medical record numbers with prefixes (MRN:, Patient ID:)
+            - Specific phone numbers and emails
+            - Specific dates tied to medical events
+
+            DO NOT REDACT:
+            - Hypothetical case descriptions ("my client", "a veteran")
+            - General age references in questions ("72 years old")
+            - Common first names without identifiers
+            - Medical conditions (PTSD, diabetes, etc.)
+            - General questions about processes
+
+            Text to review: \(text)
+
+            Return the text with ONLY obvious PHI redacted as [REDACTED_PHI_X]. If no PHI found, return original text.
+            """
+            
+        case .veteranRecord, .documentUpload:
+            return """
+            You are a HIPAA-compliant medical text de-identification expert. Your task is to identify and redact all Protected Health Information (PHI) from the following medical text while preserving the original structure and meaning.
+
+            PHI categories to identify and redact:
+            1. Names (patients, doctors, family members)
+            2. Professions (medical staff titles with names)
+            3. Locations (hospitals, cities, addresses)
+            4. Ages (patient ages)
+            5. Dates (visit dates, birth dates, admission/discharge dates)
+            6. Contacts (phone numbers, emails)
+            7. IDs (patient IDs, medical record numbers, SSNs)
+            8. Biometric identifiers
+            9. Any other unique identifying information
+
+            Instructions:
+            - Replace each PHI element with [REDACTED_PHI_X] where X is a sequential number
+            - Preserve the original text structure and medical meaning
+            - Only redact clear PHI, not general medical terms
+            - Maintain proper grammar and sentence flow
+            - Return only the de-identified text
+
+            Medical text to de-identify:
+            \(text)
+            """
         }
     }
 

@@ -362,13 +362,16 @@ struct ChatInterfaceView: View {
                 )
                 userMessage.session = session
                 
-               // Apply de-identification if needed (using GPT-4 approach)
+               // Smart de-identification: Only de-identify if actual PHI detected in user query
                let deidentificationService = DeIdentificationService()
-               let deidentificationResult = await deidentificationService.deidentifyWithGPT4(text: messageText)
                
-               if deidentificationResult.redactionLog != "No PHI/PII detected or redacted." {
-                   userMessage.isDeidentified = true
-                   userMessage.deidentifiedContent = deidentificationResult.deidentifiedText
+               if await deidentificationService.shouldDeidentify(messageText, context: .userQuery) {
+                   let deidentificationResult = await deidentificationService.deidentifyWithGPT4(text: messageText, context: .userQuery)
+                   
+                   if deidentificationResult.redactionLog != "No PHI/PII detected or redacted." {
+                       userMessage.isDeidentified = true
+                       userMessage.deidentifiedContent = deidentificationResult.deidentifiedText
+                   }
                }
                 
                 // Update model on main thread
@@ -378,10 +381,11 @@ struct ChatInterfaceView: View {
                     try? modelContext.save()
                 }
                 
-                // Send to OpenAI
+                // Send ORIGINAL message to OpenAI for response (not de-identified version)
+                // This allows helpful responses to hypothetical cases
                 let messages = openAIService.createMessageArray(
                     conversationHistory: sessionMessages,
-                    currentMessage: userMessage.isDeidentified ? userMessage.deidentifiedContent ?? messageText : messageText
+                    currentMessage: messageText  // Use original, not de-identified
                 )
                 
                 let response = try await openAIService.sendChatCompletion(messages: messages)
