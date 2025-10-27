@@ -150,19 +150,31 @@ class ChatPDFExporter: ObservableObject {
     
     /// Add metadata to PDF document
     private func addMetadata(to pdfDocument: PDFDocument, from exportData: ChatExportData) {
+        // Use proper PDF metadata attributes that PDFDocument supports
         let metadata = [
             "Title": "Veterans Benefits Copilot Chat Export",
             "Author": exportData.exportedBy,
             "Subject": "Veterans Benefits Claims Assistance",
             "Keywords": "Veterans, Benefits, Claims, HIPAA, Confidential",
             "Creator": "Veterans Benefits Copilot",
-            "Producer": "Veterans Benefits Copilot v1.0",
-            "CreationDate": formatDate(exportData.exportDate),
-            "ModDate": formatDate(Date())
+            "Producer": "Veterans Benefits Copilot v1.0"
         ]
         
         for (key, value) in metadata {
             pdfDocument.setValue(value, forKey: key)
+        }
+        
+        // Set creation and modification dates using proper PDF attributes
+        if let attributes = pdfDocument.documentAttributes {
+            var updatedAttributes = attributes
+            updatedAttributes[PDFDocumentAttribute.creationDateAttribute] = exportData.exportDate
+            updatedAttributes[PDFDocumentAttribute.modificationDateAttribute] = Date()
+            pdfDocument.documentAttributes = updatedAttributes
+        } else {
+            var attributes: [PDFDocumentAttribute: Any] = [:]
+            attributes[PDFDocumentAttribute.creationDateAttribute] = exportData.exportDate
+            attributes[PDFDocumentAttribute.modificationDateAttribute] = Date()
+            pdfDocument.documentAttributes = attributes
         }
     }
     
