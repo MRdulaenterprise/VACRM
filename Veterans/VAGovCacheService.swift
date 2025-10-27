@@ -25,7 +25,7 @@ class VAGovCacheService {
     
     // MARK: - Cache Keys
     
-    private enum CacheKey: String, CaseIterable {
+    enum CacheKey: String, CaseIterable {
         case disabilities = "disabilities"
         case serviceBranches = "serviceBranches"
         case treatmentCenters = "treatmentCenters"

@@ -1017,6 +1017,6 @@ struct AddClaimView: View {
         recordRetentionDate: Date()
     )
     
-    return AddClaimView(veteran: veteran)
+    AddClaimView(veteran: veteran)
         .modelContainer(for: [Veteran.self, Claim.self, Document.self, ClaimActivity.self], inMemory: true)
 }

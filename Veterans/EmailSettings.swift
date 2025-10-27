@@ -760,4 +760,3 @@ enum EmailNotificationType: String, CaseIterable {
 #Preview {
     SettingsView()
 }
-}

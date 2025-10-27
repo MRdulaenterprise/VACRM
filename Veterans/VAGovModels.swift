@@ -174,15 +174,15 @@ struct TreatmentCenter: Codable, Identifiable {
 }
 
 struct StatesResponse: Codable {
-    let data: [State]
+    let data: [VAState]
 }
 
-struct State: Codable, Identifiable {
+struct VAState: Codable, Identifiable {
     let id: String
     let type: String
-    let attributes: StateAttributes
+    let attributes: VAStateAttributes
     
-    struct StateAttributes: Codable {
+    struct VAStateAttributes: Codable {
         let name: String
         let code: String
     }
