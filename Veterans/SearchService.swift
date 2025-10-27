@@ -60,7 +60,7 @@ struct SearchResult: Identifiable, Hashable {
         \(veteran.dateOfBirth.formatted())
         \(veteran.serviceStartDate.formatted())
         \(veteran.serviceEndDate.formatted())
-        \(veteran.addressStreet)
+        \(veteran.addressStreet ?? "")
         \(veteran.addressCity)
         \(veteran.addressState)
         \(veteran.addressZip)

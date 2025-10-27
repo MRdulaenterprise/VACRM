@@ -135,7 +135,7 @@ struct EditVeteranView: View {
         _rankAtSeparation = State(initialValue: veteran.rankAtSeparation)
         _militaryOccupation = State(initialValue: veteran.militaryOccupation)
         _socialSecurityNumber = State(initialValue: veteran.ssnLastFour)
-        _address = State(initialValue: veteran.addressStreet)
+        _address = State(initialValue: veteran.addressStreet ?? "")
         _city = State(initialValue: veteran.addressCity ?? "")
         _state = State(initialValue: veteran.addressState ?? "")
         _zipCode = State(initialValue: veteran.addressZip)

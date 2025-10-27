@@ -352,7 +352,7 @@ struct VeteranDetailView: View {
     }
     
     private func openMaps() {
-        let address = "\(veteran.addressStreet), \(veteran.addressCity), \(veteran.addressState) \(veteran.addressZip)"
+        let address = "\(veteran.addressStreet ?? ""), \(veteran.addressCity ?? ""), \(veteran.addressState ?? "") \(veteran.addressZip)"
         let encodedAddress = address.addingPercentEncoding(withAllowedCharacters: CharacterSet.urlQueryAllowed) ?? ""
         if let url = URL(string: "http://maps.apple.com/?q=\(encodedAddress)") {
             NSWorkspace.shared.open(url)
@@ -447,7 +447,7 @@ struct VeteranOverviewView: View {
                 InfoRow(label: "Gender", value: veteran.gender)
                 InfoRow(label: "Marital Status", value: veteran.maritalStatus)
                 InfoRow(label: "SSN Last Four", value: veteran.ssnLastFour)
-                InfoRow(label: "Address", value: "\(veteran.addressStreet), \(veteran.addressCity), \(veteran.addressState) \(veteran.addressZip)")
+                InfoRow(label: "Address", value: "\(veteran.addressStreet ?? ""), \(veteran.addressCity ?? ""), \(veteran.addressState ?? "") \(veteran.addressZip)")
                 InfoRow(label: "County", value: veteran.county)
                 InfoRow(label: "Homeless Status", value: veteran.homelessStatus)
             }
