@@ -47,55 +47,58 @@ struct TemplateEditorView: View {
             // Header
             HStack {
                 Text(isEditing ? "Edit Template" : "New Template")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
+                    .font(.title2)
+                    .fontWeight(.semibold)
                 
                 Spacer()
                 
-                HStack(spacing: 12) {
+                HStack(spacing: 8) {
                     Button("Cancel") {
                         dismiss()
                     }
                     .buttonStyle(SecondaryButtonStyle())
+                    .font(.system(size: 12))
                     
                     Button("Save") {
                         saveTemplate()
                     }
                     .buttonStyle(PrimaryButtonStyle())
+                    .font(.system(size: 12))
                     .disabled(!canSave)
-                    
-                    Button("Close") {
-                        dismiss()
-                    }
-                    .buttonStyle(SecondaryButtonStyle())
                 }
             }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 16)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
             .background(.regularMaterial)
             
             Divider()
             
-            // Content
-            Form {
-                // Basic Information Section
-                basicInformationSection
-                
-                // Content Section
-                contentSection
-                
-                // Variables Section
-                variablesSection
-                
-                // Preview Section
-                previewSection
-                
-                // Validation Section
-                if let validation = validationResult {
-                    validationSection(validation)
+            // Content with scrolling
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Basic Information Section
+                    basicInformationSection
+                    
+                    // Content Section
+                    contentSection
+                    
+                    // Variables Section
+                    variablesSection
+                    
+                    // Preview Section
+                    previewSection
+                    
+                    // Validation Section
+                    if let validation = validationResult {
+                        validationSection(validation)
+                    }
                 }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 16)
             }
         }
+        .frame(minWidth: 600, idealWidth: 700, maxWidth: 800)
+        .frame(minHeight: 500, idealHeight: 600, maxHeight: 700)
         .onAppear {
             loadTemplate()
         }
@@ -113,67 +116,78 @@ struct TemplateEditorView: View {
     // MARK: - Basic Information Section
     
     private var basicInformationSection: some View {
-        Section("Basic Information") {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Name")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.primary)
-                
-                TextField("Template name...", text: $name)
-                    .textFieldStyle(.roundedBorder)
-            }
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Basic Information")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.primary)
             
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Description")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.primary)
-                
-                TextField("Template description...", text: $description, axis: .vertical)
-                    .textFieldStyle(.roundedBorder)
-                    .lineLimit(2...4)
-            }
-            
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Category")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.primary)
-                
-                Picker("Category", selection: $category) {
-                    ForEach(PromptCategory.allCases, id: \.self) { category in
-                        HStack {
-                            Image(systemName: category.icon)
-                            Text(category.rawValue)
-                        }
-                        .tag(category)
-                    }
+            VStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Name")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.primary)
+                    
+                    TextField("Template name...", text: $name)
+                        .textFieldStyle(.roundedBorder)
+                        .font(.system(size: 14))
                 }
-                .pickerStyle(.menu)
+                
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Description")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.primary)
+                    
+                    TextField("Template description...", text: $description, axis: .vertical)
+                        .textFieldStyle(.roundedBorder)
+                        .font(.system(size: 14))
+                        .lineLimit(2...4)
+                }
+                
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Category")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.primary)
+                    
+                    Picker("Category", selection: $category) {
+                        ForEach(PromptCategory.allCases, id: \.self) { category in
+                            HStack {
+                                Image(systemName: category.icon)
+                                Text(category.rawValue)
+                            }
+                            .tag(category)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .font(.system(size: 14))
+                }
             }
         }
+        .padding(16)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
     }
     
     // MARK: - Content Section
     
     private var contentSection: some View {
-        Section("Template Content") {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Text("Content")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.primary)
-                    
-                    Spacer()
-                    
-                    Button("Validate") {
-                        validateTemplate()
-                    }
-                    .buttonStyle(SecondaryButtonStyle())
-                    .font(.system(size: 12))
-                }
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("Template Content")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.primary)
                 
+                Spacer()
+                
+                Button("Validate") {
+                    validateTemplate()
+                }
+                .buttonStyle(SecondaryButtonStyle())
+                .font(.system(size: 12))
+            }
+            
+            VStack(alignment: .leading, spacing: 8) {
                 TextEditor(text: $content)
-                    .font(.system(size: 14, design: .monospaced))
-                    .frame(minHeight: 200)
+                    .font(.system(size: 13, design: .monospaced))
+                    .frame(minHeight: 150)
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
                             .stroke(.blue.opacity(0.2), lineWidth: 1)
@@ -184,27 +198,29 @@ struct TemplateEditorView: View {
                     .foregroundColor(.secondary)
             }
         }
+        .padding(16)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
     }
     
     // MARK: - Variables Section
     
     private var variablesSection: some View {
-        Section("Variables") {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    Text("Template Variables")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.primary)
-                    
-                    Spacer()
-                    
-                    Button("Add Variable") {
-                        showingVariableInput = true
-                    }
-                    .buttonStyle(SecondaryButtonStyle())
-                    .font(.system(size: 12))
-                }
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("Template Variables")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.primary)
                 
+                Spacer()
+                
+                Button("Add Variable") {
+                    showingVariableInput = true
+                }
+                .buttonStyle(SecondaryButtonStyle())
+                .font(.system(size: 12))
+            }
+            
+            VStack(alignment: .leading, spacing: 12) {
                 if variables.isEmpty {
                     Text("No variables defined")
                         .font(.system(size: 12))
@@ -229,6 +245,8 @@ struct TemplateEditorView: View {
                     .foregroundColor(.secondary)
             }
         }
+        .padding(16)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
         .sheet(isPresented: $showingVariableInput) {
             variableInputSheet
         }
@@ -237,14 +255,14 @@ struct TemplateEditorView: View {
     // MARK: - Preview Section
     
     private var previewSection: some View {
-        Section("Preview") {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Template Preview")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.primary)
+            
             VStack(alignment: .leading, spacing: 8) {
-                Text("Template Preview")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.primary)
-                
                 Text(content.isEmpty ? "Enter template content to see preview..." : content)
-                    .font(.system(size: 14))
+                    .font(.system(size: 13))
                     .foregroundColor(content.isEmpty ? .secondary : .primary)
                     .padding(12)
                     .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
@@ -252,7 +270,7 @@ struct TemplateEditorView: View {
                 
                 if !variables.isEmpty {
                     Text("Variables: \(variables.joined(separator: ", "))")
-                        .font(.system(size: 12))
+                        .font(.system(size: 11))
                         .foregroundColor(.blue)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
@@ -260,22 +278,24 @@ struct TemplateEditorView: View {
                 }
             }
         }
+        .padding(16)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
     }
     
     // MARK: - Validation Section
     
     private func validationSection(_ validation: TemplateValidationResult) -> some View {
-        Section("Validation") {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Image(systemName: validation.isValid ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
-                        .foregroundColor(validation.isValid ? .green : .orange)
-                    
-                    Text(validation.isValid ? "Template is valid" : "Template has issues")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(validation.isValid ? .green : .orange)
-                }
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Image(systemName: validation.isValid ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                    .foregroundColor(validation.isValid ? .green : .orange)
                 
+                Text(validation.isValid ? "Template is valid" : "Template has issues")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(validation.isValid ? .green : .orange)
+            }
+            
+            VStack(alignment: .leading, spacing: 8) {
                 if !validation.errors.isEmpty {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Errors:")
@@ -305,6 +325,8 @@ struct TemplateEditorView: View {
                 }
             }
         }
+        .padding(16)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
     }
     
     // MARK: - Variable Input Sheet

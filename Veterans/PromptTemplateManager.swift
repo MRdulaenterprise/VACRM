@@ -13,6 +13,7 @@ struct PromptTemplateManager: View {
     
     // MARK: - Properties
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
     @Query private var templates: [PromptTemplate]
     
     @State private var selectedTemplate: PromptTemplate?
@@ -64,11 +65,11 @@ struct PromptTemplateManager: View {
                     }
                     .font(.system(size: 12))
                     
-                    Button("Close") {
-                        // Dismiss view
+                    Button(action: { dismiss() }) {
+                        Image(systemName: "xmark")
+                            .foregroundColor(.black)
                     }
-                    .buttonStyle(SecondaryButtonStyle())
-                    .font(.system(size: 12))
+                    .font(.system(size: 12, weight: .bold))
                 }
             }
             .padding(.horizontal, 20)
