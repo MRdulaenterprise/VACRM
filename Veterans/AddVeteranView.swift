@@ -283,11 +283,6 @@ struct AddVeteranView: View {
                     ) {
                         personalInformationContent
                     }
-                    .onTapGesture {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            personalInfoExpanded.toggle()
-                        }
-                    }
                     
                     // Contact Information Section
                     CollapsibleSection(
@@ -296,11 +291,6 @@ struct AddVeteranView: View {
                         isExpanded: $contactInfoExpanded
                     ) {
                         contactInformationContent
-                    }
-                    .onTapGesture {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            contactInfoExpanded.toggle()
-                        }
                     }
                     
                     // Address Information Section
@@ -311,11 +301,6 @@ struct AddVeteranView: View {
                     ) {
                         addressInformationContent
                     }
-                    .onTapGesture {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            addressInfoExpanded.toggle()
-                        }
-                    }
                     
                     // Military Service Section
                     CollapsibleSection(
@@ -324,11 +309,6 @@ struct AddVeteranView: View {
                         isExpanded: $militaryServiceExpanded
                     ) {
                         militaryServiceContent
-                    }
-                    .onTapGesture {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            militaryServiceExpanded.toggle()
-                        }
                     }
                     
                     // Emergency Contact Section
@@ -339,11 +319,6 @@ struct AddVeteranView: View {
                     ) {
                         emergencyContactContent
                     }
-                    .onTapGesture {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            emergencyContactExpanded.toggle()
-                        }
-                    }
                     
                     // Additional Information Section
                     CollapsibleSection(
@@ -352,11 +327,6 @@ struct AddVeteranView: View {
                         isExpanded: $additionalInfoExpanded
                     ) {
                         additionalInformationContent
-                    }
-                    .onTapGesture {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            additionalInfoExpanded.toggle()
-                        }
                     }
                     
                     // VA Benefits Section
@@ -367,11 +337,6 @@ struct AddVeteranView: View {
                     ) {
                         vaBenefitsContent
                     }
-                    .onTapGesture {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            vaBenefitsExpanded.toggle()
-                        }
-                    }
                     
                     // Case Management Section
                     CollapsibleSection(
@@ -381,11 +346,6 @@ struct AddVeteranView: View {
                     ) {
                         caseManagementContent
                     }
-                    .onTapGesture {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            caseManagementExpanded.toggle()
-                        }
-                    }
                     
                     // Notes Section
                     CollapsibleSection(
@@ -394,11 +354,6 @@ struct AddVeteranView: View {
                         isExpanded: $notesExpanded
                     ) {
                         notesContent
-                    }
-                    .onTapGesture {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            notesExpanded.toggle()
-                        }
                     }
                 }
                 .padding(.horizontal, 20)
