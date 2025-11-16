@@ -8,6 +8,7 @@ enum NavigationSection: String, CaseIterable {
     case claims = "Claims"
     case kanban = "Kanban Board"
     case documents = "Documents"
+    case va = "VA.GOV"
     case copilot = "Copilot"
     
     var icon: String {
@@ -17,6 +18,7 @@ enum NavigationSection: String, CaseIterable {
         case .claims: return "doc.text.fill"
         case .kanban: return "rectangle.3.group.fill"
         case .documents: return "folder.fill"
+        case .va: return "building.2.fill"
         case .copilot: return "brain.head.profile"
         }
     }
@@ -88,9 +90,6 @@ struct ContentView: View {
                     .navigationDestination(for: Veteran.self) { veteran in
                         VeteranDetailView(veteran: veteran, initialTab: nil)
                     }
-                    .navigationDestination(for: Claim.self) { claim in
-                        ClaimDetailView(claim: claim)
-                    }
             }
         }
         .sheet(isPresented: $showingAddVeteran) {
@@ -125,21 +124,18 @@ struct ContentView: View {
             // Header
                 VStack(spacing: 16) {
                     HStack(spacing: 12) {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(.blue.gradient)
-                                .frame(width: 44, height: 44)
-                            
-                            Image(systemName: "shield.checkered")
-                                .font(.system(size: 20, weight: .semibold))
-                                .foregroundColor(.white)
-                        }
+                        // App Logo
+                        Image("AppLogo")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 44, height: 44)
+                            .cornerRadius(12)
                         
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Veterans Claims")
+                            Text("Veterans Claims Foundation")
                                 .font(.system(size: 18, weight: .bold))
                                 .foregroundColor(.primary)
-                            Text("Foundation CRM")
+                            Text("Veterans Benefit Management")
                                 .font(.system(size: 12, weight: .medium))
                                 .foregroundColor(.secondary)
                         }
@@ -412,6 +408,8 @@ struct ContentView: View {
                                         }
                                     }
                                 )
+                            case .va:
+                                VAView()
                             case .copilot:
                                 CopilotView()
                 case .kanban:
@@ -580,7 +578,10 @@ struct ContentView: View {
                 ScrollView {
                     LazyVStack(spacing: 16) {
                         ForEach(claims, id: \.id) { claim in
-                        NavigationLink(value: claim) {
+                            Button(action: {
+                                selectedClaim = claim
+                                showingClaimDetail = true
+                            }) {
                                 ClaimRowView(claim: claim)
                             }
                             .buttonStyle(PlainButtonStyle())
@@ -614,12 +615,8 @@ struct ContentView: View {
                         .frame(minHeight: 600, idealHeight: 800, maxHeight: 1000)
                 }
             }
-        .sheet(isPresented: $showingClaimDetail) {
-            if let claim = selectedClaim {
-                ClaimDetailView(claim: claim)
-                    .frame(minWidth: 1000, idealWidth: 1200, maxWidth: 1400)
-                    .frame(minHeight: 600, idealHeight: 800, maxHeight: 1000)
-            }
+        .sheet(item: $selectedClaim) { claim in
+            ClaimDetailModal(claim: claim)
         }
         }
     }
@@ -690,22 +687,72 @@ struct ContentView: View {
 // MARK: - Documents List View
 struct DocumentsListView: View {
     let onDocumentSelected: (Document) -> Void
-        
-        var body: some View {
+    @Environment(\.modelContext) private var modelContext
+    @Query private var veterans: [Veteran]
+    
+    @State private var showingVeteranSelector = false
+    @State private var showingDocumentUpload = false
+    @State private var showingNewFolder = false
+    @State private var selectedVeteran: Veteran?
+    @State private var actionType: DocumentActionType = .upload
+    
+    enum DocumentActionType {
+        case upload
+        case newFolder
+    }
+    
+    var body: some View {
         VStack(spacing: 0) {
             // Header
-                HStack {
+            HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Documents")
                         .font(.system(size: 24, weight: .bold))
-                            .foregroundColor(.primary)
-                        
-                    Text("No documents uploaded yet")
-                        .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.secondary)
-                    }
+                        .foregroundColor(.primary)
                     
-                    Spacer()
+                    Text("\(veterans.reduce(0) { $0 + $1.documents.count }) documents")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+                
+                // Action Buttons
+                HStack(spacing: 12) {
+                    Button(action: {
+                        actionType = .newFolder
+                        showingVeteranSelector = true
+                    }) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "folder.badge.plus")
+                                .font(.system(size: 14, weight: .medium))
+                            Text("New Folder")
+                                .font(.system(size: 14, weight: .medium))
+                        }
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(.blue.gradient, in: Capsule())
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    
+                    Button(action: {
+                        actionType = .upload
+                        showingVeteranSelector = true
+                    }) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "doc.badge.plus")
+                                .font(.system(size: 14, weight: .medium))
+                            Text("New File")
+                                .font(.system(size: 14, weight: .medium))
+                        }
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(.green.gradient, in: Capsule())
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 16)
@@ -717,26 +764,141 @@ struct DocumentsListView: View {
                 alignment: .bottom
             )
             
-            // Empty State
-            VStack(spacing: 20) {
-                Image(systemName: "folder")
-                    .font(.system(size: 60))
-                    .foregroundColor(.secondary)
-                
-                Text("No Documents")
-                    .font(.title2)
-                    .fontWeight(.medium)
-                    .foregroundColor(.primary)
-                
-                Text("Upload documents to get started")
-                    .font(.body)
-                    .foregroundColor(.secondary)
+            // Content
+            if veterans.isEmpty {
+                emptyStateView
+            } else {
+                documentsContentView
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(.ultraThinMaterial)
         }
+        .sheet(isPresented: $showingVeteranSelector) {
+            VeteranSelectorView(
+                veterans: veterans,
+                onVeteranSelected: { veteran in
+                    selectedVeteran = veteran
+                    showingVeteranSelector = false
+                    if actionType == .upload {
+                        showingDocumentUpload = true
+                    } else {
+                        showingNewFolder = true
+                    }
+                }
+            )
+            .frame(minWidth: 600, idealWidth: 700, maxWidth: 800)
+            .frame(minHeight: 500, idealHeight: 600, maxHeight: 700)
+        }
+        .sheet(isPresented: $showingDocumentUpload) {
+            if let veteran = selectedVeteran {
+                DocumentUploadView(veteran: veteran, claim: nil)
+                    .frame(minWidth: 1000, idealWidth: 1200, maxWidth: 1400)
+                    .frame(minHeight: 600, idealHeight: 800, maxHeight: 1000)
+            }
+        }
+        .sheet(isPresented: $showingNewFolder) {
+            if let veteran = selectedVeteran {
+                NewFolderView(veteran: veteran)
+                    .frame(minWidth: 600, idealWidth: 700, maxWidth: 800)
+                    .frame(minHeight: 400, idealHeight: 500, maxHeight: 600)
+            }
         }
     }
+    
+    private var emptyStateView: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "folder")
+                .font(.system(size: 60))
+                .foregroundColor(.secondary)
+            
+            Text("No Documents")
+                .font(.title2)
+                .fontWeight(.medium)
+                .foregroundColor(.primary)
+            
+            Text("Upload documents to get started")
+                .font(.body)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(.ultraThinMaterial)
+    }
+    
+    private var documentsContentView: some View {
+        ScrollView {
+            LazyVStack(spacing: 12) {
+                ForEach(veterans.filter { !$0.documents.isEmpty }, id: \.id) { veteran in
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Image(systemName: "person.fill")
+                                .foregroundColor(.blue)
+                            Text(veteran.fullName)
+                                .font(.system(size: 16, weight: .semibold))
+                            Spacer()
+                            Text("\(veteran.documents.count) document\(veteran.documents.count == 1 ? "" : "s")")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+                        .background(.regularMaterial)
+                        .cornerRadius(8)
+                        
+                        ForEach(veteran.documents, id: \.id) { document in
+                            DocumentsListRowView(document: document) {
+                                onDocumentSelected(document)
+                            }
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
+        }
+    }
+}
+
+// MARK: - Documents List Row View
+struct DocumentsListRowView: View {
+    let document: Document
+    let onTap: () -> Void
+    
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 12) {
+                Image(systemName: "doc.fill")
+                    .font(.system(size: 20))
+                    .foregroundColor(.blue)
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(document.fileName)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.primary)
+                    
+                    Text(document.documentType.rawValue)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+                
+                Text(formatFileSize(document.fileSize))
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.secondary)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(.ultraThinMaterial)
+            .cornerRadius(8)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+    
+    private func formatFileSize(_ bytes: Int64) -> String {
+        let formatter = ByteCountFormatter()
+        formatter.allowedUnits = [.useKB, .useMB, .useGB]
+        formatter.countStyle = .file
+        return formatter.string(fromByteCount: bytes)
+    }
+}
     
     // MARK: - Dashboard View
     struct DashboardView: View {
@@ -866,8 +1028,336 @@ struct DocumentsListView: View {
         }
     }
     
+// MARK: - Veteran Selector View
+struct VeteranSelectorView: View {
+    let veterans: [Veteran]
+    let onVeteranSelected: (Veteran) -> Void
+    @Environment(\.dismiss) private var dismiss
+    
+    @State private var searchText = ""
+    @State private var selectedVeteran: Veteran?
+    
+    private var filteredVeterans: [Veteran] {
+        if searchText.isEmpty {
+            return veterans
+        } else {
+            return veterans.filter { veteran in
+                veteran.firstName.localizedCaseInsensitiveContains(searchText) ||
+                veteran.lastName.localizedCaseInsensitiveContains(searchText) ||
+                veteran.emailPrimary.localizedCaseInsensitiveContains(searchText) ||
+                veteran.veteranId.localizedCaseInsensitiveContains(searchText)
+            }
+        }
+    }
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Select Veteran")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundColor(.primary)
+                    
+                    Text("Choose a veteran to associate with this document")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+                
+                Button("Cancel") {
+                    dismiss()
+                }
+                .buttonStyle(.bordered)
+            }
+            .padding(20)
+            .background(.regularMaterial)
+            .overlay(
+                Rectangle()
+                    .fill(.primary.opacity(0.1))
+                    .frame(height: 1),
+                alignment: .bottom
+            )
+            
+            // Search Bar
+            HStack {
+                HStack(spacing: 8) {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(.secondary)
+                        .font(.system(size: 16, weight: .medium))
+                    
+                    TextField("Search veterans...", text: $searchText)
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 14))
+                    
+                    if !searchText.isEmpty {
+                        Button(action: {
+                            searchText = ""
+                        }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(.secondary)
+                                .font(.system(size: 16))
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(.blue.opacity(0.2), lineWidth: 1)
+                )
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
+            
+            // Veterans List
+            if filteredVeterans.isEmpty {
+                VStack(spacing: 20) {
+                    Image(systemName: "person.slash")
+                        .font(.system(size: 60))
+                        .foregroundColor(.secondary)
+                    
+                    Text("No Veterans Found")
+                        .font(.title2)
+                        .fontWeight(.medium)
+                        .foregroundColor(.primary)
+                    
+                    Text(searchText.isEmpty ? "No veterans in database" : "No veterans match your search")
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(.ultraThinMaterial)
+            } else {
+                ScrollView {
+                    LazyVStack(spacing: 8) {
+                        ForEach(filteredVeterans, id: \.id) { veteran in
+                            VeteranSelectionRow(
+                                veteran: veteran,
+                                isSelected: selectedVeteran?.id == veteran.id
+                            ) {
+                                selectedVeteran = veteran
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 16)
+                }
+            }
+            
+            // Footer
+            HStack {
+                Spacer()
+                
+                Button("Select") {
+                    if let veteran = selectedVeteran {
+                        onVeteranSelected(veteran)
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(selectedVeteran == nil)
+            }
+            .padding(20)
+            .background(.regularMaterial)
+            .overlay(
+                Rectangle()
+                    .fill(.primary.opacity(0.1))
+                    .frame(height: 1),
+                alignment: .top
+            )
+        }
+    }
+}
+
+// MARK: - Veteran Selection Row
+struct VeteranSelectionRow: View {
+    let veteran: Veteran
+    let isSelected: Bool
+    let onTap: () -> Void
+    
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 12) {
+                // Selection Indicator
+                ZStack {
+                    Circle()
+                        .fill(isSelected ? .blue : .clear)
+                        .frame(width: 24, height: 24)
+                        .overlay(
+                            Circle()
+                                .stroke(isSelected ? .blue : .gray.opacity(0.3), lineWidth: 2)
+                        )
+                    
+                    if isSelected {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                }
+                
+                // Veteran Icon
+                ZStack {
+                    Circle()
+                        .fill(.blue.gradient)
+                        .frame(width: 40, height: 40)
+                    
+                    Image(systemName: "person.fill")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.white)
+                }
+                
+                // Veteran Info
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(veteran.fullName)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(.primary)
+                    
+                    HStack(spacing: 12) {
+                        if !veteran.veteranId.isEmpty {
+                            Text("ID: \(veteran.veteranId)")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(.secondary)
+                        }
+                        
+                        if !veteran.emailPrimary.isEmpty {
+                            Text(veteran.emailPrimary)
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+                
+                Spacer()
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(isSelected ? Color.blue.opacity(0.1) : Color.clear)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(isSelected ? .blue.opacity(0.5) : .clear, lineWidth: 2)
+                    )
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+// MARK: - New Folder View
+struct NewFolderView: View {
+    let veteran: Veteran
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
+    
+    @State private var folderName = ""
+    @State private var folderDescription = ""
+    @State private var isCreating = false
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("New Folder")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundColor(.primary)
+                    
+                    Text("for \(veteran.fullName)")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+                
+                Button("Cancel") {
+                    dismiss()
+                }
+                .buttonStyle(.bordered)
+            }
+            .padding(20)
+            .background(.regularMaterial)
+            .overlay(
+                Rectangle()
+                    .fill(.primary.opacity(0.1))
+                    .frame(height: 1),
+                alignment: .bottom
+            )
+            
+            // Form
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Folder Name")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.primary)
+                        
+                        TextField("Enter folder name", text: $folderName)
+                            .textFieldStyle(.plain)
+                            .padding(12)
+                            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Description (Optional)")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.primary)
+                        
+                        TextField("Enter folder description", text: $folderDescription, axis: .vertical)
+                            .textFieldStyle(.plain)
+                            .padding(12)
+                            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+                            .lineLimit(3...6)
+                    }
+                }
+                .padding(20)
+            }
+            
+            // Footer
+            HStack {
+                Spacer()
+                
+                Button("Create Folder") {
+                    createFolder()
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(folderName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isCreating)
+            }
+            .padding(20)
+            .background(.regularMaterial)
+            .overlay(
+                Rectangle()
+                    .fill(.primary.opacity(0.1))
+                    .frame(height: 1),
+                alignment: .top
+            )
+        }
+    }
+    
+    private func createFolder() {
+        // Note: This is a placeholder for folder creation
+        // In a real implementation, you would create a Folder model or use tags/categories
+        // For now, we'll just show a success message and dismiss
+        isCreating = true
+        
+        // TODO: Implement actual folder creation logic
+        // This could involve:
+        // 1. Creating a Folder model with name, description, veteran relationship
+        // 2. Or using document tags/categories to organize documents
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            isCreating = false
+            dismiss()
+        }
+    }
+}
+
     #Preview {
         ContentView()
             .modelContainer(for: [Veteran.self, Claim.self, Document.self, ClaimActivity.self], inMemory: true)
-}
+    }
 

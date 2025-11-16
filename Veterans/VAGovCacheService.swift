@@ -6,11 +6,12 @@
 //
 
 import Foundation
+import SwiftUI
 
 /// VA.GOV API caching service with hybrid caching strategy
 /// Caches reference data (disabilities, service branches, states) for extended periods
 /// Always fetches live data for forms and facilities
-class VAGovCacheService {
+class VAGovCacheService: ObservableObject {
     
     // MARK: - Properties
     

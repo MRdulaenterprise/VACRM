@@ -10,6 +10,7 @@ import SwiftData
 
 /// Main Copilot interface with three-panel layout
 /// Left: Session list, Center: Chat interface, Right: Options and templates
+@MainActor
 struct CopilotView: View {
     
     // MARK: - Properties
@@ -106,8 +107,6 @@ struct CopilotView: View {
         }
         .sheet(isPresented: $showingSettings) {
             CopilotSettingsView(onSave: { _ in })
-                .frame(minWidth: 600, idealWidth: 800, maxWidth: 1000)
-                .frame(minHeight: 400, idealHeight: 600, maxHeight: 800)
         }
         .sheet(isPresented: $showingTemplateManager) {
             PromptTemplateManager()
@@ -497,6 +496,8 @@ struct CopilotView: View {
             guard let url = urls.first else { return }
             
             Task { @MainActor in
+                // Capture ModelContext on main actor to avoid Sendable warning
+                nonisolated(unsafe) let context = modelContext
                 do {
                     // Note: ModelContext Sendable warning is expected with SwiftData
                     // This is safe in this context as we're on the main actor
@@ -504,7 +505,7 @@ struct CopilotView: View {
                         fileURL: url,
                         fileName: url.lastPathComponent,
                         sessionId: session.id,
-                        context: modelContext
+                        context: context
                     )
                 } catch {
                     print("Failed to process document: \(error)")

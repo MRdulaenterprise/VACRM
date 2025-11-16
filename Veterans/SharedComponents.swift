@@ -125,3 +125,53 @@ struct StatBadge: View {
     }
 }
 
+// MARK: - Collapsible Section
+struct CollapsibleSection<Content: View>: View {
+    let title: String
+    let icon: String
+    @Binding var isExpanded: Bool
+    let content: Content
+    
+    init(title: String, icon: String, isExpanded: Binding<Bool>, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.icon = icon
+        self._isExpanded = isExpanded
+        self.content = content()
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Button(action: {
+                withAnimation {
+                    isExpanded.toggle()
+                }
+            }) {
+                HStack {
+                    Image(systemName: icon)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.blue)
+                    
+                    Text(title)
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                    
+                    Spacer()
+                    
+                    Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(.secondary)
+                }
+                .padding()
+                .background(.ultraThinMaterial)
+            }
+            .buttonStyle(PlainButtonStyle())
+            
+            if isExpanded {
+                content
+            }
+        }
+        .background(.ultraThinMaterial)
+        .cornerRadius(12)
+    }
+}
+

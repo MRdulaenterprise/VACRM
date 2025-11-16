@@ -43,8 +43,9 @@ struct VeteransApp: App {
             
             // Clear existing database and start fresh
             do {
-                let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-                let storeURL = documentsPath.appendingPathComponent("default.store")
+                // SwiftData stores by default in Application Support
+                let appSupportPath = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+                let storeURL = appSupportPath.appendingPathComponent("default.store")
                 
                 // Remove existing store if it exists
                 if FileManager.default.fileExists(atPath: storeURL.path) {

@@ -16,6 +16,7 @@ struct CopilotSettingsView: View {
     let onSave: (String) -> Void
     
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
     @StateObject private var openAIService = OpenAIService()
     
     @State private var apiKey = ""
@@ -42,11 +43,13 @@ struct CopilotSettingsView: View {
             
             Divider()
             
-            // Content - Single view without scrolling
-            contentView
+            // Content - Scrollable
+            ScrollView {
+                contentView
+            }
         }
-        .frame(minWidth: 600, idealWidth: 700, maxWidth: 800)
-        .frame(minHeight: 500, idealHeight: 600, maxHeight: 700)
+        .frame(minWidth: 900, idealWidth: 1100, maxWidth: 1300)
+        .frame(minHeight: 600, idealHeight: 750, maxHeight: 900)
         .onAppear {
             loadSettings()
         }
@@ -89,23 +92,21 @@ struct CopilotSettingsView: View {
             Spacer()
             
             HStack(spacing: 8) {
-                Button("Cancel") {
-                    // Dismiss view
-                }
-                .buttonStyle(SecondaryButtonStyle())
-                .font(.system(size: 12))
-                
                 Button("Save") {
                     saveSettings()
                 }
                 .buttonStyle(PrimaryButtonStyle())
                 .font(.system(size: 12))
                 
-                Button("Close") {
-                    // Dismiss view
+                Button(action: {
+                    dismiss()
+                }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 18))
+                        .foregroundColor(.secondary)
                 }
-                .buttonStyle(SecondaryButtonStyle())
-                .font(.system(size: 12))
+                .buttonStyle(PlainButtonStyle())
+                .help("Close")
             }
         }
         .padding(.horizontal, 20)
@@ -116,21 +117,21 @@ struct CopilotSettingsView: View {
     // MARK: - Content View
     
     private var contentView: some View {
-        HStack(spacing: 0) {
-                   // Left Column
-                   VStack(alignment: .leading, spacing: 16) {
-                       // API Configuration
-                       apiConfigurationCard
-                       
-                       // Model Settings
-                       modelSettingsCard
-                       
-                       // Security Settings
-                       securitySettingsCard
-                   }
-                   .frame(maxWidth: .infinity)
-                   .padding(.horizontal, 16)
-                   .padding(.vertical, 12)
+        HStack(alignment: .top, spacing: 0) {
+            // Left Column
+            VStack(alignment: .leading, spacing: 16) {
+                // API Configuration
+                apiConfigurationCard
+                
+                // Model Settings
+                modelSettingsCard
+                
+                // Security Settings
+                securitySettingsCard
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
             
             Divider()
             
@@ -146,9 +147,11 @@ struct CopilotSettingsView: View {
                 auditLogsCard
             }
             .frame(maxWidth: .infinity)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
         }
+        .frame(maxWidth: .infinity)
+        .padding(.bottom, 20)
     }
     
     // MARK: - API Configuration Card
@@ -473,6 +476,7 @@ struct CopilotSettingsView: View {
         UserDefaults.standard.set(enableEncryption, forKey: "copilot_encryption")
         
         // Dismiss view
+        dismiss()
     }
     
     private func testConnection() {

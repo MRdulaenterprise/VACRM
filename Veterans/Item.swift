@@ -30,7 +30,7 @@ final class Veteran {
     var addressStreet: String?
     var addressCity: String?
     var addressState: String?
-    var addressZip: String
+    var addressZip: String = ""
     var county: String
     var mailingAddressDifferent: Bool
     var homelessStatus: String
@@ -568,6 +568,9 @@ final class Claim {
         self.conditions = []
     }
 }
+
+// Allow SwiftUI item-based sheets and lists to work with Claim instances
+extension Claim: Identifiable {}
 
 // MARK: - Document Model
 @Model

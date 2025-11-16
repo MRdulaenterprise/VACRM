@@ -88,14 +88,103 @@ struct EditVeteranView: View {
     @State private var idMeVerified: Bool
     @State private var hipaaConsentSigned: Bool
     
+    // Additional missing fields
+    @State private var yearsOfService: Int
+    @State private var dischargeUpgradeSought: Bool
+    @State private var unitAssignments: String
+    @State private var deploymentLocations: String
+    @State private var combatTheaters: String
+    @State private var medalsAndAwards: String
+    @State private var healthcareEnrollmentDate: Date?
+    @State private var priorityGroup: String
+    @State private var vaMedicalCenter: String
+    @State private var vaClinic: String
+    @State private var primaryCareProvider: String
+    @State private var patientAdvocateContact: String
+    @State private var giBillStartDate: Date?
+    @State private var educationEntitlementMonths: Int
+    @State private var percentEligible: Int
+    @State private var yellowRibbon: Bool
+    @State private var currentSchool: String
+    @State private var degreeProgram: String
+    @State private var graduationDate: Date?
+    @State private var vrAndEEnrolled: Bool
+    @State private var vrAndECounselor: String
+    @State private var homeLoanCoeDate: Date?
+    @State private var homeLoanEntitlementRemaining: Int
+    @State private var homeLoanUsedCount: Int
+    @State private var currentVaLoanActive: Bool
+    @State private var homeLoanDefault: Bool
+    @State private var irrrlEligible: Bool
+    @State private var sgliActive: Bool
+    @State private var vgliEnrolled: Bool
+    @State private var vgliCoverageAmount: Int
+    @State private var vmliEligible: Bool
+    @State private var houseboundBenefit: Bool
+    @State private var compensationStartDate: Date?
+    @State private var backPayOwed: Double
+    @State private var backPayReceived: Double
+    @State private var backPayDate: Date?
+    @State private var paymentMethod: String
+    @State private var bankAccountOnFile: Bool
+    @State private var paymentHeld: Bool
+    @State private var paymentHoldReason: String
+    @State private var overpaymentDebt: Bool
+    @State private var debtAmount: Double
+    @State private var debtRepaymentPlan: String
+    @State private var offsetActive: Bool
+    @State private var spouseDependent: Bool
+    @State private var numberOfDisabledChildren: Int
+    @State private var dependentParent: Bool
+    @State private var derivativeBenefits: Bool
+    @State private var intakeDate: Date
+    @State private var caseOpenedDate: Date
+    @State private var vsoOrganization: String
+    @State private var priorityReason: String
+    @State private var nextActionItem: String
+    @State private var nextActionOwner: String
+    @State private var nextFollowupDate: Date?
+    @State private var lastContactDate: Date?
+    @State private var lastContactMethod: String
+    @State private var contactAttempts: Int
+    @State private var veteranResponsive: String
+    @State private var barriersToClaim: String
+    @State private var requiresLegalAssistance: Bool
+    @State private var attorneyName: String
+    @State private var powerOfAttorney: Bool
+    @State private var poaOrganization: String
+    @State private var fiduciaryNeeded: Bool
+    @State private var fiduciaryAppointed: Bool
+    @State private var successLikelihood: String
+    @State private var confidenceReasoning: String
+    @State private var estimatedCompletionDate: Date?
+    @State private var caseClosedDate: Date?
+    @State private var caseOutcome: String
+    @State private var satisfactionRating: Int
+    @State private var testimonialProvided: Bool
+    @State private var referralSource: String
+    @State private var wouldRecommend: Bool
+    @State private var homelessVeteranCoordinator: String
+    @State private var suicideRisk: Bool
+    @State private var crisisLineContacted: Bool
+    @State private var mstCoordinatorContact: String
+    @State private var formerGuardReserve: Bool
+    @State private var blueWaterNavy: Bool
+    @State private var socialSecurityDisability: Bool
+    @State private var underemployed: Bool
+    @State private var mailingAddressDifferent: Bool
+    @State private var secondaryPhone: String
+    
     // MARK: - State for Collapsible Sections
     @State private var isPersonalInfoExpanded = true
     @State private var isContactInfoExpanded = true
+    @State private var isAddressInfoExpanded = true
     @State private var isServiceInfoExpanded = true
-    @State private var isMedicalInfoExpanded = true
-    @State private var isFinancialInfoExpanded = true
-    @State private var isLegalInfoExpanded = true
-    @State private var isNotesExpanded = true
+    @State private var isEmergencyContactExpanded = false
+    @State private var isAdditionalInfoExpanded = false
+    @State private var isVABenefitsExpanded = false
+    @State private var isCaseManagementExpanded = false
+    @State private var isNotesExpanded = false
     
     private let serviceBranches = ["Army", "Navy", "Air Force", "Marines", "Coast Guard", "Space Force"]
     private let serviceComponents = ["Active Duty", "Reserve", "National Guard", "Veteran"]
@@ -187,6 +276,91 @@ struct EditVeteranView: View {
         _portalAccountCreated = State(initialValue: veteran.portalAccountCreated)
         _idMeVerified = State(initialValue: veteran.idMeVerified)
         _hipaaConsentSigned = State(initialValue: veteran.hipaaConsentSigned)
+        _yearsOfService = State(initialValue: veteran.yearsOfService)
+        _dischargeUpgradeSought = State(initialValue: veteran.dischargeUpgradeSought)
+        _unitAssignments = State(initialValue: veteran.unitAssignments)
+        _deploymentLocations = State(initialValue: veteran.deploymentLocations)
+        _combatTheaters = State(initialValue: veteran.combatTheaters)
+        _medalsAndAwards = State(initialValue: veteran.medalsAndAwards)
+        _healthcareEnrollmentDate = State(initialValue: veteran.healthcareEnrollmentDate)
+        _priorityGroup = State(initialValue: veteran.priorityGroup)
+        _vaMedicalCenter = State(initialValue: veteran.vaMedicalCenter)
+        _vaClinic = State(initialValue: veteran.vaClinic)
+        _primaryCareProvider = State(initialValue: veteran.primaryCareProvider)
+        _patientAdvocateContact = State(initialValue: veteran.patientAdvocateContact)
+        _giBillStartDate = State(initialValue: veteran.giBillStartDate)
+        _educationEntitlementMonths = State(initialValue: veteran.educationEntitlementMonths)
+        _percentEligible = State(initialValue: veteran.percentEligible)
+        _yellowRibbon = State(initialValue: veteran.yellowRibbon)
+        _currentSchool = State(initialValue: veteran.currentSchool)
+        _degreeProgram = State(initialValue: veteran.degreeProgram)
+        _graduationDate = State(initialValue: veteran.graduationDate)
+        _vrAndEEnrolled = State(initialValue: veteran.vrAndEEnrolled)
+        _vrAndECounselor = State(initialValue: veteran.vrAndECounselor)
+        _homeLoanCoeDate = State(initialValue: veteran.homeLoanCoeDate)
+        _homeLoanEntitlementRemaining = State(initialValue: veteran.homeLoanEntitlementRemaining)
+        _homeLoanUsedCount = State(initialValue: veteran.homeLoanUsedCount)
+        _currentVaLoanActive = State(initialValue: veteran.currentVaLoanActive)
+        _homeLoanDefault = State(initialValue: veteran.homeLoanDefault)
+        _irrrlEligible = State(initialValue: veteran.irrrlEligible)
+        _sgliActive = State(initialValue: veteran.sgliActive)
+        _vgliEnrolled = State(initialValue: veteran.vgliEnrolled)
+        _vgliCoverageAmount = State(initialValue: veteran.vgliCoverageAmount)
+        _vmliEligible = State(initialValue: veteran.vmliEligible)
+        _houseboundBenefit = State(initialValue: veteran.houseboundBenefit)
+        _compensationStartDate = State(initialValue: veteran.compensationStartDate)
+        _backPayOwed = State(initialValue: veteran.backPayOwed)
+        _backPayReceived = State(initialValue: veteran.backPayReceived)
+        _backPayDate = State(initialValue: veteran.backPayDate)
+        _paymentMethod = State(initialValue: veteran.paymentMethod)
+        _bankAccountOnFile = State(initialValue: veteran.bankAccountOnFile)
+        _paymentHeld = State(initialValue: veteran.paymentHeld)
+        _paymentHoldReason = State(initialValue: veteran.paymentHoldReason)
+        _overpaymentDebt = State(initialValue: veteran.overpaymentDebt)
+        _debtAmount = State(initialValue: veteran.debtAmount)
+        _debtRepaymentPlan = State(initialValue: veteran.debtRepaymentPlan)
+        _offsetActive = State(initialValue: veteran.offsetActive)
+        _spouseDependent = State(initialValue: veteran.spouseDependent)
+        _numberOfDisabledChildren = State(initialValue: veteran.numberOfDisabledChildren)
+        _dependentParent = State(initialValue: veteran.dependentParent)
+        _derivativeBenefits = State(initialValue: veteran.derivativeBenefits)
+        _intakeDate = State(initialValue: veteran.intakeDate)
+        _caseOpenedDate = State(initialValue: veteran.caseOpenedDate)
+        _vsoOrganization = State(initialValue: veteran.vsoOrganization)
+        _priorityReason = State(initialValue: veteran.priorityReason)
+        _nextActionItem = State(initialValue: veteran.nextActionItem)
+        _nextActionOwner = State(initialValue: veteran.nextActionOwner)
+        _nextFollowupDate = State(initialValue: veteran.nextFollowupDate)
+        _lastContactDate = State(initialValue: veteran.lastContactDate)
+        _lastContactMethod = State(initialValue: veteran.lastContactMethod)
+        _contactAttempts = State(initialValue: veteran.contactAttempts)
+        _veteranResponsive = State(initialValue: veteran.veteranResponsive)
+        _barriersToClaim = State(initialValue: veteran.barriersToClaim)
+        _requiresLegalAssistance = State(initialValue: veteran.requiresLegalAssistance)
+        _attorneyName = State(initialValue: veteran.attorneyName)
+        _powerOfAttorney = State(initialValue: veteran.powerOfAttorney)
+        _poaOrganization = State(initialValue: veteran.poaOrganization)
+        _fiduciaryNeeded = State(initialValue: veteran.fiduciaryNeeded)
+        _fiduciaryAppointed = State(initialValue: veteran.fiduciaryAppointed)
+        _successLikelihood = State(initialValue: veteran.successLikelihood)
+        _confidenceReasoning = State(initialValue: veteran.confidenceReasoning)
+        _estimatedCompletionDate = State(initialValue: veteran.estimatedCompletionDate)
+        _caseClosedDate = State(initialValue: veteran.caseClosedDate)
+        _caseOutcome = State(initialValue: veteran.caseOutcome)
+        _satisfactionRating = State(initialValue: veteran.satisfactionRating)
+        _testimonialProvided = State(initialValue: veteran.testimonialProvided)
+        _referralSource = State(initialValue: veteran.referralSource)
+        _wouldRecommend = State(initialValue: veteran.wouldRecommend)
+        _homelessVeteranCoordinator = State(initialValue: veteran.homelessVeteranCoordinator)
+        _suicideRisk = State(initialValue: veteran.suicideRisk)
+        _crisisLineContacted = State(initialValue: veteran.crisisLineContacted)
+        _mstCoordinatorContact = State(initialValue: veteran.mstCoordinatorContact)
+        _formerGuardReserve = State(initialValue: veteran.formerGuardReserve)
+        _blueWaterNavy = State(initialValue: veteran.blueWaterNavy)
+        _socialSecurityDisability = State(initialValue: veteran.socialSecurityDisability)
+        _underemployed = State(initialValue: veteran.underemployed)
+        _mailingAddressDifferent = State(initialValue: veteran.mailingAddressDifferent)
+        _secondaryPhone = State(initialValue: veteran.phoneSecondary)
     }
     
     var body: some View {
@@ -334,16 +508,30 @@ struct EditVeteranView: View {
                     // Service Information Section
                     CollapsibleSection(title: "Service Information", icon: "shield.fill", isExpanded: $isServiceInfoExpanded) {
                         VStack(alignment: .leading, spacing: 15) {
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("Service Branch")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                                Picker("Service Branch", selection: $serviceBranch) {
-                                    ForEach(serviceBranches, id: \.self) { branch in
-                                        Text(branch).tag(branch)
+                            HStack(spacing: 12) {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("Service Branch")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    Picker("Service Branch", selection: $serviceBranch) {
+                                        ForEach(serviceBranches, id: \.self) { branch in
+                                            Text(branch).tag(branch)
+                                        }
                                     }
+                                    .pickerStyle(.menu)
                                 }
-                                .pickerStyle(.menu)
+                                
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("Service Component")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    Picker("Service Component", selection: $serviceComponent) {
+                                        ForEach(serviceComponents, id: \.self) { component in
+                                            Text(component).tag(component)
+                                        }
+                                    }
+                                    .pickerStyle(.menu)
+                                }
                             }
                             
                             HStack(spacing: 12) {
@@ -364,17 +552,55 @@ struct EditVeteranView: View {
                                 }
                             }
                             
+                            HStack(spacing: 12) {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("Discharge Type")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    Picker("Discharge Type", selection: $dischargeType) {
+                                        ForEach(dischargeTypes, id: \.self) { type in
+                                            Text(type).tag(type)
+                                        }
+                                    }
+                                    .pickerStyle(.menu)
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("Discharge Date")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    DatePicker("Discharge Date", selection: $dischargeDate, displayedComponents: .date)
+                                        .datePickerStyle(.compact)
+                                }
+                            }
+                            
+                            HStack(spacing: 12) {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("Rank at Separation")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    TextField("Rank at Separation", text: $rankAtSeparation)
+                                        .textFieldStyle(.roundedBorder)
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("Military Occupation")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    TextField("Military Occupation", text: $militaryOccupation)
+                                        .textFieldStyle(.roundedBorder)
+                                }
+                            }
+                            
                             VStack(alignment: .leading, spacing: 8) {
-                                Text("Discharge Type")
+                                Text("Years of Service")
                                     .font(.subheadline)
                                     .foregroundColor(.secondary)
-                                Picker("Discharge Type", selection: $dischargeType) {
-                                    ForEach(dischargeTypes, id: \.self) { type in
-                                        Text(type).tag(type)
-                                    }
-                                }
-                                .pickerStyle(.menu)
+                                Stepper("\(yearsOfService) years", value: $yearsOfService, in: 0...50)
                             }
+                            
+                            Toggle("Discharge Upgrade Sought", isOn: $dischargeUpgradeSought)
+                                .font(.subheadline)
                         }
                         .padding()
                     }
@@ -422,6 +648,64 @@ struct EditVeteranView: View {
                             }
                             
                             VStack(alignment: .leading, spacing: 8) {
+                                Text("Secondary Phone")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                TextField("Secondary Phone", text: $phoneSecondary)
+                                    .textFieldStyle(.roundedBorder)
+                            }
+                            
+                            HStack(spacing: 12) {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("Preferred Contact Method")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    Picker("Preferred Contact Method", selection: $preferredContactMethod) {
+                                        ForEach(contactMethods, id: \.self) { method in
+                                            Text(method).tag(method)
+                                        }
+                                    }
+                                    .pickerStyle(.menu)
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("Preferred Contact Time")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    Picker("Preferred Contact Time", selection: $preferredContactTime) {
+                                        ForEach(contactTimes, id: \.self) { time in
+                                            Text(time).tag(time)
+                                        }
+                                    }
+                                    .pickerStyle(.menu)
+                                }
+                            }
+                            
+                            HStack(spacing: 12) {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("Primary Language")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    Picker("Primary Language", selection: $languagePrimary) {
+                                        ForEach(languages, id: \.self) { language in
+                                            Text(language).tag(language)
+                                        }
+                                    }
+                                    .pickerStyle(.menu)
+                                }
+                                
+                                Toggle("Interpreter Needed", isOn: $interpreterNeeded)
+                                    .padding(.top, 24)
+                            }
+                        }
+                        .padding()
+                    }
+                    .background(sectionBackground)
+                    
+                    // Address Information Section
+                    CollapsibleSection(title: "Address Information", icon: "house.fill", isExpanded: $isAddressInfoExpanded) {
+                        VStack(alignment: .leading, spacing: 15) {
+                            VStack(alignment: .leading, spacing: 8) {
                                 Text("Address")
                                     .font(.subheadline)
                                     .foregroundColor(.secondary)
@@ -445,7 +729,9 @@ struct EditVeteranView: View {
                                     TextField("State", text: $state)
                                         .textFieldStyle(.roundedBorder)
                                 }
-                                
+                            }
+                            
+                            HStack(spacing: 12) {
                                 VStack(alignment: .leading, spacing: 8) {
                                     Text("ZIP")
                                         .font(.subheadline)
@@ -453,14 +739,37 @@ struct EditVeteranView: View {
                                     TextField("ZIP", text: $zipCode)
                                         .textFieldStyle(.roundedBorder)
                                 }
+                                
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("County")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    TextField("County", text: $county)
+                                        .textFieldStyle(.roundedBorder)
+                                }
                             }
+                            
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Homeless Status")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                Picker("Homeless Status", selection: $homelessStatus) {
+                                    ForEach(homelessStatuses, id: \.self) { status in
+                                        Text(status).tag(status)
+                                    }
+                                }
+                                .pickerStyle(.menu)
+                            }
+                            
+                            Toggle("Mailing Address Different", isOn: $mailingAddressDifferent)
+                                .font(.subheadline)
                         }
                         .padding()
                     }
                     .background(sectionBackground)
                     
-                    // Notes Section
-                    CollapsibleSection(title: "Notes & Additional Information", icon: "note.text", isExpanded: $isNotesExpanded) {
+                    // Emergency Contact Section
+                    CollapsibleSection(title: "Emergency Contact", icon: "phone.fill", isExpanded: $isEmergencyContactExpanded) {
                         VStack(alignment: .leading, spacing: 15) {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Emergency Contact Name")
@@ -477,7 +786,287 @@ struct EditVeteranView: View {
                                 TextField("Emergency Contact Phone", text: $emergencyPhone)
                                     .textFieldStyle(.roundedBorder)
                             }
+                        }
+                        .padding()
+                    }
+                    .background(sectionBackground)
+                    
+                    // Additional Information Section
+                    CollapsibleSection(title: "Additional Information", icon: "info.circle.fill", isExpanded: $isAdditionalInfoExpanded) {
+                        VStack(alignment: .leading, spacing: 15) {
+                            Text("Service History")
+                                .font(.headline)
                             
+                            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                                Toggle("Combat Veteran", isOn: $combatVeteran)
+                                Toggle("Purple Heart Recipient", isOn: $purpleHeartRecipient)
+                                Toggle("Agent Orange Exposure", isOn: $agentOrangeExposure)
+                                Toggle("Radiation Exposure", isOn: $radiationExposure)
+                                Toggle("Burn Pit Exposure", isOn: $burnPitExposure)
+                                Toggle("Gulf War Service", isOn: $gulfWarService)
+                                Toggle("Camp Lejeune Exposure", isOn: $campLejeuneExposure)
+                                Toggle("PACT Act Eligible", isOn: $pactActEligible)
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("POW Status")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                Picker("POW Status", selection: $powStatus) {
+                                    ForEach(powStatuses, id: \.self) { status in
+                                        Text(status).tag(status)
+                                    }
+                                }
+                                .pickerStyle(.menu)
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Unit Assignments")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                TextField("Unit Assignments", text: $unitAssignments)
+                                    .textFieldStyle(.roundedBorder)
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Deployment Locations")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                TextField("Deployment Locations", text: $deploymentLocations)
+                                    .textFieldStyle(.roundedBorder)
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Combat Theaters")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                TextField("Combat Theaters", text: $combatTheaters)
+                                    .textFieldStyle(.roundedBorder)
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Medals and Awards")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                TextField("Medals and Awards", text: $medalsAndAwards)
+                                    .textFieldStyle(.roundedBorder)
+                            }
+                            
+                            Text("Special Circumstances")
+                                .font(.headline)
+                                .padding(.top, 8)
+                            
+                            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                                Toggle("Terminal Illness", isOn: $terminalIllness)
+                                Toggle("Financial Hardship", isOn: $financialHardship)
+                                Toggle("Homeless Veteran", isOn: $homelessVeteran)
+                                Toggle("Incarcerated", isOn: $incarcerated)
+                                Toggle("Mental Health Crisis", isOn: $mentalHealthCrisis)
+                                Toggle("Substance Abuse", isOn: $substanceAbuse)
+                                Toggle("MST Survivor", isOn: $mstSurvivor)
+                                Toggle("Women Veteran", isOn: $womenVeteran)
+                                Toggle("Minority Veteran", isOn: $minorityVeteran)
+                                Toggle("LGBTQ Veteran", isOn: $lgbtqVeteran)
+                                Toggle("Elderly Veteran", isOn: $elderlyVeteran)
+                                Toggle("Disabled Veteran", isOn: $disabledVeteran)
+                                Toggle("Unemployed", isOn: $unemployed)
+                                Toggle("Underemployed", isOn: $underemployed)
+                                Toggle("Former Guard/Reserve", isOn: $formerGuardReserve)
+                                Toggle("Blue Water Navy", isOn: $blueWaterNavy)
+                                Toggle("Social Security Disability", isOn: $socialSecurityDisability)
+                            }
+                        }
+                        .padding()
+                    }
+                    .background(sectionBackground)
+                    
+                    // VA Benefits & Services Section
+                    CollapsibleSection(title: "VA Benefits & Services", icon: "heart.fill", isExpanded: $isVABenefitsExpanded) {
+                        VStack(alignment: .leading, spacing: 15) {
+                            HStack(spacing: 12) {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("Current Disability Rating")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    Stepper("\(currentDisabilityRating)%", value: $currentDisabilityRating, in: 0...100)
+                                }
+                                
+                                Toggle("VA Healthcare Enrolled", isOn: $vaHealthcareEnrolled)
+                            }
+                            
+                            if vaHealthcareEnrolled {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("Healthcare Enrollment Date")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    if let enrollmentDate = healthcareEnrollmentDate {
+                                        DatePicker("", selection: Binding(
+                                            get: { enrollmentDate },
+                                            set: { healthcareEnrollmentDate = $0 }
+                                        ), displayedComponents: .date)
+                                        .datePickerStyle(.compact)
+                                    } else {
+                                        Button("Set Date") {
+                                            healthcareEnrollmentDate = Date()
+                                        }
+                                    }
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("Priority Group")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    TextField("Priority Group", text: $priorityGroup)
+                                        .textFieldStyle(.roundedBorder)
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("VA Medical Center")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    TextField("VA Medical Center", text: $vaMedicalCenter)
+                                        .textFieldStyle(.roundedBorder)
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("VA Clinic")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    TextField("VA Clinic", text: $vaClinic)
+                                        .textFieldStyle(.roundedBorder)
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("Primary Care Provider")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    TextField("Primary Care Provider", text: $primaryCareProvider)
+                                        .textFieldStyle(.roundedBorder)
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("Patient Advocate Contact")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    TextField("Patient Advocate Contact", text: $patientAdvocateContact)
+                                        .textFieldStyle(.roundedBorder)
+                                }
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Education Benefits")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                TextField("Education Benefits", text: $educationBenefits)
+                                    .textFieldStyle(.roundedBorder)
+                            }
+                            
+                            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                                Toggle("Home Loan COE Issued", isOn: $homeLoanCoeIssued)
+                                Toggle("Pension Benefits", isOn: $pensionBenefits)
+                                Toggle("Aid and Attendance", isOn: $aidAndAttendance)
+                                Toggle("Housebound Benefit", isOn: $houseboundBenefit)
+                                Toggle("Burial Benefits", isOn: $burialBenefits)
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Monthly Compensation")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                TextField("Monthly Compensation", value: $monthlyCompensation, format: .currency(code: "USD"))
+                                    .textFieldStyle(.roundedBorder)
+                            }
+                        }
+                        .padding()
+                    }
+                    .background(sectionBackground)
+                    
+                    // Case Management Section
+                    CollapsibleSection(title: "Case Management", icon: "briefcase.fill", isExpanded: $isCaseManagementExpanded) {
+                        VStack(alignment: .leading, spacing: 15) {
+                            HStack(spacing: 12) {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("Case Status")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    Picker("Case Status", selection: $caseStatus) {
+                                        ForEach(caseStatuses, id: \.self) { status in
+                                            Text(status).tag(status)
+                                        }
+                                    }
+                                    .pickerStyle(.menu)
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("Case Priority")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    Picker("Case Priority", selection: $casePriority) {
+                                        ForEach(casePriorities, id: \.self) { priority in
+                                            Text(priority).tag(priority)
+                                        }
+                                    }
+                                    .pickerStyle(.menu)
+                                }
+                            }
+                            
+                            HStack(spacing: 12) {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("Assigned VSO")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    TextField("Assigned VSO", text: $assignedVso)
+                                        .textFieldStyle(.roundedBorder)
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("VSO Organization")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    TextField("VSO Organization", text: $vsoOrganization)
+                                        .textFieldStyle(.roundedBorder)
+                                }
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Assigned Counselor")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                TextField("Assigned Counselor", text: $assignedCounselor)
+                                    .textFieldStyle(.roundedBorder)
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Next Action Item")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                TextField("Next Action Item", text: $nextActionItem)
+                                    .textFieldStyle(.roundedBorder)
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Next Action Owner")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                TextField("Next Action Owner", text: $nextActionOwner)
+                                    .textFieldStyle(.roundedBorder)
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Priority Reason")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                TextField("Priority Reason", text: $priorityReason)
+                                    .textFieldStyle(.roundedBorder)
+                            }
+                        }
+                        .padding()
+                    }
+                    .background(sectionBackground)
+                    
+                    // Notes Section
+                    CollapsibleSection(title: "Additional Notes", icon: "note.text", isExpanded: $isNotesExpanded) {
+                        VStack(alignment: .leading, spacing: 15) {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Additional Notes")
                                     .font(.subheadline)
@@ -560,8 +1149,90 @@ struct EditVeteranView: View {
         veteran.preferredContactTime = preferredContactTime
         veteran.languagePrimary = languagePrimary
         veteran.interpreterNeeded = interpreterNeeded
-        veteran.preferredContactMethod = emergencyContact
-        veteran.phoneSecondary = emergencyPhone
+        veteran.mailingAddressDifferent = mailingAddressDifferent
+        veteran.yearsOfService = yearsOfService
+        veteran.dischargeUpgradeSought = dischargeUpgradeSought
+        veteran.unitAssignments = unitAssignments
+        veteran.deploymentLocations = deploymentLocations
+        veteran.combatTheaters = combatTheaters
+        veteran.medalsAndAwards = medalsAndAwards
+        veteran.healthcareEnrollmentDate = healthcareEnrollmentDate
+        veteran.priorityGroup = priorityGroup
+        veteran.vaMedicalCenter = vaMedicalCenter
+        veteran.vaClinic = vaClinic
+        veteran.primaryCareProvider = primaryCareProvider
+        veteran.patientAdvocateContact = patientAdvocateContact
+        veteran.giBillStartDate = giBillStartDate
+        veteran.educationEntitlementMonths = educationEntitlementMonths
+        veteran.percentEligible = percentEligible
+        veteran.yellowRibbon = yellowRibbon
+        veteran.currentSchool = currentSchool
+        veteran.degreeProgram = degreeProgram
+        veteran.graduationDate = graduationDate
+        veteran.vrAndEEnrolled = vrAndEEnrolled
+        veteran.vrAndECounselor = vrAndECounselor
+        veteran.homeLoanCoeDate = homeLoanCoeDate
+        veteran.homeLoanEntitlementRemaining = homeLoanEntitlementRemaining
+        veteran.homeLoanUsedCount = homeLoanUsedCount
+        veteran.currentVaLoanActive = currentVaLoanActive
+        veteran.homeLoanDefault = homeLoanDefault
+        veteran.irrrlEligible = irrrlEligible
+        veteran.sgliActive = sgliActive
+        veteran.vgliEnrolled = vgliEnrolled
+        veteran.vgliCoverageAmount = vgliCoverageAmount
+        veteran.vmliEligible = vmliEligible
+        veteran.houseboundBenefit = houseboundBenefit
+        veteran.compensationStartDate = compensationStartDate
+        veteran.backPayOwed = backPayOwed
+        veteran.backPayReceived = backPayReceived
+        veteran.backPayDate = backPayDate
+        veteran.paymentMethod = paymentMethod
+        veteran.bankAccountOnFile = bankAccountOnFile
+        veteran.paymentHeld = paymentHeld
+        veteran.paymentHoldReason = paymentHoldReason
+        veteran.overpaymentDebt = overpaymentDebt
+        veteran.debtAmount = debtAmount
+        veteran.debtRepaymentPlan = debtRepaymentPlan
+        veteran.offsetActive = offsetActive
+        veteran.spouseDependent = spouseDependent
+        veteran.numberOfDisabledChildren = numberOfDisabledChildren
+        veteran.dependentParent = dependentParent
+        veteran.derivativeBenefits = derivativeBenefits
+        veteran.intakeDate = intakeDate
+        veteran.caseOpenedDate = caseOpenedDate
+        veteran.vsoOrganization = vsoOrganization
+        veteran.priorityReason = priorityReason
+        veteran.nextActionItem = nextActionItem
+        veteran.nextActionOwner = nextActionOwner
+        veteran.nextFollowupDate = nextFollowupDate
+        veteran.lastContactDate = lastContactDate
+        veteran.lastContactMethod = lastContactMethod
+        veteran.contactAttempts = contactAttempts
+        veteran.veteranResponsive = veteranResponsive
+        veteran.barriersToClaim = barriersToClaim
+        veteran.requiresLegalAssistance = requiresLegalAssistance
+        veteran.attorneyName = attorneyName
+        veteran.powerOfAttorney = powerOfAttorney
+        veteran.poaOrganization = poaOrganization
+        veteran.fiduciaryNeeded = fiduciaryNeeded
+        veteran.fiduciaryAppointed = fiduciaryAppointed
+        veteran.successLikelihood = successLikelihood
+        veteran.confidenceReasoning = confidenceReasoning
+        veteran.estimatedCompletionDate = estimatedCompletionDate
+        veteran.caseClosedDate = caseClosedDate
+        veteran.caseOutcome = caseOutcome
+        veteran.satisfactionRating = satisfactionRating
+        veteran.testimonialProvided = testimonialProvided
+        veteran.referralSource = referralSource
+        veteran.wouldRecommend = wouldRecommend
+        veteran.homelessVeteranCoordinator = homelessVeteranCoordinator
+        veteran.suicideRisk = suicideRisk
+        veteran.crisisLineContacted = crisisLineContacted
+        veteran.mstCoordinatorContact = mstCoordinatorContact
+        veteran.formerGuardReserve = formerGuardReserve
+        veteran.blueWaterNavy = blueWaterNavy
+        veteran.socialSecurityDisability = socialSecurityDisability
+        veteran.underemployed = underemployed
         veteran.counselorNotes = notes
         veteran.combatVeteran = combatVeteran
         veteran.purpleHeartRecipient = purpleHeartRecipient

@@ -25,6 +25,8 @@ struct ChatInterfaceView: View {
     @State private var selectedTemplate: PromptTemplate?
     @State private var showingTemplatePicker = false
     @State private var showingDocumentList = false
+    @State private var showingFileUpload = false
+    @State private var showingDocumentSelector = false
     
     // MARK: - Computed Properties
     
@@ -83,6 +85,22 @@ struct ChatInterfaceView: View {
             Spacer()
             
             HStack(spacing: 12) {
+                // Attach Document Button
+                Menu {
+                    Button(action: { showingFileUpload = true }) {
+                        Label("Upload New File", systemImage: "doc.badge.plus")
+                    }
+                    
+                    Button(action: { showingDocumentSelector = true }) {
+                        Label("Select from Documents", systemImage: "folder")
+                    }
+                } label: {
+                    Image(systemName: "paperclip")
+                        .font(.system(size: 16))
+                }
+                .buttonStyle(PlainButtonStyle())
+                
+                // View Documents Button
                 Button(action: { showingDocumentList = true }) {
                     Image(systemName: "doc.text")
                         .font(.system(size: 16))
@@ -90,6 +108,7 @@ struct ChatInterfaceView: View {
                 .buttonStyle(PlainButtonStyle())
                 .disabled(session.documents.isEmpty)
                 
+                // Export Button
                 Button(action: { exportSession() }) {
                     Image(systemName: "square.and.arrow.up")
                         .font(.system(size: 16))
@@ -202,6 +221,24 @@ struct ChatInterfaceView: View {
         }
         .sheet(isPresented: $showingDocumentList) {
             documentListSheet
+        }
+        .fileImporter(
+            isPresented: $showingFileUpload,
+            allowedContentTypes: [.pdf, .text, .plainText, .data],
+            allowsMultipleSelection: true
+        ) { result in
+            handleFileUpload(result)
+        }
+        .sheet(isPresented: $showingDocumentSelector) {
+            DocumentSelectorView(
+                session: session,
+                documentService: documentService,
+                onDocumentSelected: { document in
+                    attachDocumentToSession(document)
+                }
+            )
+            .frame(minWidth: 800, idealWidth: 1000, maxWidth: 1200)
+            .frame(minHeight: 600, idealHeight: 700, maxHeight: 800)
         }
     }
     
@@ -436,6 +473,77 @@ struct ChatInterfaceView: View {
             }
         }
     }
+    
+    private func handleFileUpload(_ result: Result<[URL], Error>) {
+        switch result {
+        case .success(let urls):
+            Task { @MainActor in
+                // Capture ModelContext on main actor to avoid Sendable warning
+                nonisolated(unsafe) let context = modelContext
+                for url in urls {
+                    do {
+                        _ = try await documentService.processDocument(
+                            fileURL: url,
+                            fileName: url.lastPathComponent,
+                            sessionId: session.id,
+                            context: context
+                        )
+                    } catch {
+                        print("Failed to process document \(url.lastPathComponent): \(error)")
+                    }
+                }
+            }
+        case .failure(let error):
+            print("File upload failed: \(error)")
+        }
+    }
+    
+    private func attachDocumentToSession(_ document: Document) {
+        Task { @MainActor in
+            // Capture ModelContext on main actor to avoid Sendable warning
+            nonisolated(unsafe) let context = modelContext
+            do {
+                // Try to create URL from filePath
+                var fileURL: URL?
+                
+                // First, try as absolute path
+                if document.filePath.hasPrefix("/") {
+                    fileURL = URL(fileURLWithPath: document.filePath)
+                } else if let url = URL(string: document.filePath), url.scheme != nil {
+                    // Try as URL string
+                    fileURL = url
+                } else {
+                    // Try relative to documents directory
+                    if let documentsDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
+                        fileURL = documentsDir.appendingPathComponent(document.filePath)
+                    }
+                }
+                
+                guard let filePath = fileURL else {
+                    print("Invalid document path: \(document.filePath)")
+                    return
+                }
+                
+                // Check if file exists
+                if !FileManager.default.fileExists(atPath: filePath.path) {
+                    print("Document file not found at path: \(filePath.path)")
+                    // Still try to process - the file might be accessible via security-scoped resource
+                }
+                
+                // Process the document through CopilotDocumentService
+                _ = try await documentService.processDocument(
+                    fileURL: filePath,
+                    fileName: document.fileName,
+                    sessionId: session.id,
+                    context: context
+                )
+                
+                showingDocumentSelector = false
+            } catch {
+                print("Failed to attach document to session: \(error)")
+            }
+        }
+    }
 }
 
 // MARK: - Supporting Views
@@ -567,6 +675,242 @@ struct DocumentRowView: View {
         formatter.dateStyle = .short
         formatter.timeStyle = .short
         return formatter.string(from: date)
+    }
+}
+
+// MARK: - Document Selector View
+
+struct DocumentSelectorView: View {
+    let session: ChatSession
+    let documentService: CopilotDocumentService
+    let onDocumentSelected: (Document) -> Void
+    
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
+    @Query private var documents: [Document]
+    @Query private var veterans: [Veteran]
+    
+    @State private var searchText = ""
+    @State private var selectedVeteran: Veteran?
+    @State private var showingVeteranFilter = false
+    
+    private var filteredDocuments: [Document] {
+        var filtered = documents
+        
+        // Filter by veteran if selected
+        if let veteran = selectedVeteran {
+            filtered = filtered.filter { $0.veteran?.id == veteran.id }
+        }
+        
+        // Filter by search text
+        if !searchText.isEmpty {
+            filtered = filtered.filter { document in
+                document.fileName.localizedCaseInsensitiveContains(searchText) ||
+                document.documentType.rawValue.localizedCaseInsensitiveContains(searchText) ||
+                document.documentDescription.localizedCaseInsensitiveContains(searchText)
+            }
+        }
+        
+        return filtered.sorted { $0.fileName < $1.fileName }
+    }
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Select Document")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundColor(.primary)
+                    
+                    Text("Choose a document to attach to this chat session")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+                
+                Button("Cancel") {
+                    dismiss()
+                }
+                .buttonStyle(.bordered)
+            }
+            .padding(20)
+            .background(.regularMaterial)
+            .overlay(
+                Rectangle()
+                    .fill(.primary.opacity(0.1))
+                    .frame(height: 1),
+                alignment: .bottom
+            )
+            
+            // Search and Filter
+            VStack(spacing: 12) {
+                // Search Bar
+                HStack {
+                    HStack(spacing: 8) {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundColor(.secondary)
+                            .font(.system(size: 16, weight: .medium))
+                        
+                        TextField("Search documents...", text: $searchText)
+                            .textFieldStyle(.plain)
+                            .font(.system(size: 14))
+                        
+                        if !searchText.isEmpty {
+                            Button(action: {
+                                searchText = ""
+                            }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundColor(.secondary)
+                                    .font(.system(size: 16))
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                        }
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(.blue.opacity(0.2), lineWidth: 1)
+                    )
+                    
+                    // Veteran Filter
+                    Menu {
+                        Button(action: {
+                            selectedVeteran = nil
+                        }) {
+                            Label("All Veterans", systemImage: selectedVeteran == nil ? "checkmark" : "")
+                        }
+                        
+                        Divider()
+                        
+                        ForEach(veterans, id: \.id) { veteran in
+                            Button(action: {
+                                selectedVeteran = veteran
+                            }) {
+                                Label(veteran.fullName, systemImage: selectedVeteran?.id == veteran.id ? "checkmark" : "")
+                            }
+                        }
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "person.fill")
+                                .font(.system(size: 14))
+                            Text(selectedVeteran?.fullName ?? "All Veterans")
+                                .font(.system(size: 14, weight: .medium))
+                            Image(systemName: "chevron.down")
+                                .font(.system(size: 10))
+                        }
+                        .foregroundColor(.blue)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 10)
+                        .background(.blue.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
+                    }
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
+            
+            // Documents List
+            if filteredDocuments.isEmpty {
+                VStack(spacing: 20) {
+                    Image(systemName: "doc")
+                        .font(.system(size: 60))
+                        .foregroundColor(.secondary)
+                    
+                    Text("No Documents Found")
+                        .font(.title2)
+                        .fontWeight(.medium)
+                        .foregroundColor(.primary)
+                    
+                    Text(searchText.isEmpty && selectedVeteran == nil ? "No documents in database" : "No documents match your filters")
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(.ultraThinMaterial)
+            } else {
+                ScrollView {
+                    LazyVStack(spacing: 8) {
+                        ForEach(filteredDocuments, id: \.id) { document in
+                            DocumentSelectionRow(document: document) {
+                                onDocumentSelected(document)
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 16)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Document Selection Row
+
+struct DocumentSelectionRow: View {
+    let document: Document
+    let onSelect: () -> Void
+    
+    var body: some View {
+        Button(action: onSelect) {
+            HStack(spacing: 12) {
+                // Document Icon
+                Image(systemName: "doc.fill")
+                    .font(.system(size: 24))
+                    .foregroundColor(.blue)
+                    .frame(width: 40, height: 40)
+                
+                // Document Info
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(document.fileName)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
+                    
+                    HStack(spacing: 12) {
+                        Text(document.documentType.rawValue)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.secondary)
+                        
+                        if let veteran = document.veteran {
+                            Text("• \(veteran.fullName)")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(.blue)
+                        }
+                        
+                        Text("• \(formatFileSize(document.fileSize))")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.secondary)
+                    }
+                }
+                
+                Spacer()
+                
+                // Select Icon
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.blue)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(.regularMaterial)
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(.blue.opacity(0.2), lineWidth: 1)
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+    
+    private func formatFileSize(_ bytes: Int64) -> String {
+        let formatter = ByteCountFormatter()
+        formatter.allowedUnits = [.useKB, .useMB, .useGB]
+        formatter.countStyle = .file
+        return formatter.string(fromByteCount: bytes)
     }
 }
 

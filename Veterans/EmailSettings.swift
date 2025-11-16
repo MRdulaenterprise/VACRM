@@ -26,9 +26,11 @@ struct SettingsView: View {
     
     // VA.GOV Settings
     @StateObject private var vaGovService = VAGovAPIService()
-    @State private var showVAGovAPIKeyAlert: Bool = false
-    @State private var newVAGovAPIKey: String = ""
-    @State private var vaGovEnvironment: String = "sandbox"
+    @State private var showVAGovBenefitsAPIKeyAlert: Bool = false
+    @State private var showVAGovFormsAPIKeyAlert: Bool = false
+    @State private var newVAGovBenefitsAPIKey: String = ""
+    @State private var newVAGovFormsAPIKey: String = ""
+    @State private var vaGovEnvironment: VAGovAPIService.Environment = .sandbox
     @State private var vaGovTestConnectionStatus: ConnectionStatus = .idle
     @State private var vaGovSaveStatus: String = ""
     
@@ -39,32 +41,80 @@ struct SettingsView: View {
     // MARK: - Body
     var body: some View {
         VStack(spacing: 0) {
-            // Header
-            HStack {
-                Text("Settings")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                
-                Spacer()
-                
-                Button("Cancel") {
-                    dismiss()
-                }
-                .buttonStyle(.bordered)
-                
-                Button("Save") {
-                    saveSettings()
-                }
-                .buttonStyle(.borderedProminent)
-            }
-            .padding()
-            .background(Color(NSColor.controlBackgroundColor))
-            
+            settingsHeader
             Divider()
+            settingsContent
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(NSColor.windowBackgroundColor))
+        .alert("Change OpenAI API Key", isPresented: $showOpenAIAPIKeyAlert) {
+            SecureField("New OpenAI API Key", text: $newOpenAIAPIKey)
+            Button("Cancel", role: .cancel) { }
+            Button("Save") {
+                saveOpenAIAPIKey()
+            }
+        } message: {
+            Text("Enter your new OpenAI API key. This will be stored securely in the macOS Keychain.")
+        }
+        .alert("Change PaulBox API Key", isPresented: $showPaulBoxAPIKeyAlert) {
+            SecureField("New PaulBox API Key", text: $newPaulBoxAPIKey)
+            Button("Cancel", role: .cancel) { }
+            Button("Save") {
+                savePaulBoxAPIKey()
+            }
+        } message: {
+            Text("Enter your new PaulBox API key. This will be stored securely in the macOS Keychain.")
+        }
+        .alert("Change Benefits Reference Data API Key", isPresented: $showVAGovBenefitsAPIKeyAlert) {
+            SecureField("New Benefits Reference Data API Key", text: $newVAGovBenefitsAPIKey)
+            Button("Cancel", role: .cancel) { }
+            Button("Save") {
+                saveVAGovBenefitsAPIKey()
+            }
+        } message: {
+            Text("Enter your Benefits Reference Data API key. This key is used for Benefits Reference Data, Facilities, and other reference APIs. This will be stored securely in the macOS Keychain.")
+        }
+        .alert("Change Forms API Key", isPresented: $showVAGovFormsAPIKeyAlert) {
+            SecureField("New Forms API Key", text: $newVAGovFormsAPIKey)
+            Button("Cancel", role: .cancel) { }
+            Button("Save") {
+                saveVAGovFormsAPIKey()
+            }
+        } message: {
+            Text("Enter your Forms API key. This key is specifically for the VA Forms API. This will be stored securely in the macOS Keychain.")
+        }
+        .onAppear {
+            loadSettings()
+        }
+    }
+    
+    // MARK: - View Components
+    
+    private var settingsHeader: some View {
+        HStack {
+            Text("Settings")
+                .font(.largeTitle)
+                .fontWeight(.bold)
             
-            // Content
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
+            Spacer()
+            
+            Button("Cancel") {
+                dismiss()
+            }
+            .buttonStyle(.bordered)
+            
+            Button("Save") {
+                saveSettings()
+            }
+            .buttonStyle(.borderedProminent)
+        }
+        .padding()
+        .background(Color(NSColor.controlBackgroundColor))
+    }
+    
+    private var settingsContent: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
                     // MARK: - OpenAI API Configuration
                     VStack(alignment: .leading, spacing: 12) {
                         Text("OpenAI API Configuration")
@@ -189,8 +239,7 @@ struct SettingsView: View {
                                 .textFieldStyle(.modern)
                                 .disableAutocorrection(true)
                         }
-                    }
-                    
+                        
                         // PaulBox Connection Test
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Connection Test")
@@ -214,6 +263,7 @@ struct SettingsView: View {
                                 }
                             }
                         }
+                    }
                     
                     // MARK: - Notification Settings
                     VStack(alignment: .leading, spacing: 12) {
@@ -292,20 +342,27 @@ struct SettingsView: View {
                     Divider()
                     
                     // MARK: - VA.GOV API Configuration
-                    VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 16) {
                         Text("VA.GOV API Configuration")
                             .font(.headline)
                         
+                        // Benefits Reference Data API Key
                         VStack(alignment: .leading, spacing: 12) {
                             HStack {
-                                Text("API Key")
-                                    .font(.headline)
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Benefits Reference Data API Key")
+                                        .font(.headline)
+                                    Text("Used for Benefits Reference Data, Facilities, and other reference APIs")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
                                 
                                 Spacer()
                                 
                                 Button("Change") {
                                     vaGovSaveStatus = ""
-                                    showVAGovAPIKeyAlert = true
+                                    newVAGovBenefitsAPIKey = ""
+                                    showVAGovBenefitsAPIKeyAlert = true
                                 }
                                 .buttonStyle(.bordered)
                                 .controlSize(.small)
@@ -316,21 +373,66 @@ struct SettingsView: View {
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                                 
-                                Text(vaGovService.hasAPIKey() ? "Configured" : "Not configured")
+                                Text(vaGovService.hasBenefitsAPIKey() ? "Configured" : "Not configured")
                                     .font(.caption)
-                                    .foregroundColor(vaGovService.hasAPIKey() ? .green : .orange)
+                                    .foregroundColor(vaGovService.hasBenefitsAPIKey() ? .green : .orange)
                                 
                                 Spacer()
                                 
-                                Image(systemName: vaGovService.hasAPIKey() ? "checkmark.circle.fill" : "exclamationmark.triangle")
-                                    .foregroundColor(vaGovService.hasAPIKey() ? .green : .orange)
+                                Image(systemName: vaGovService.hasBenefitsAPIKey() ? "checkmark.circle.fill" : "exclamationmark.triangle")
+                                    .foregroundColor(vaGovService.hasBenefitsAPIKey() ? .green : .orange)
+                            }
+                        }
+                        .padding()
+                        .background(Color(NSColor.controlBackgroundColor))
+                        .cornerRadius(8)
+                        
+                        // Forms API Key
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Forms API Key")
+                                        .font(.headline)
+                                    Text("Used specifically for the VA Forms API")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                                
+                                Spacer()
+                                
+                                Button("Change") {
+                                    vaGovSaveStatus = ""
+                                    newVAGovFormsAPIKey = ""
+                                    showVAGovFormsAPIKeyAlert = true
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
                             }
                             
-                            if !vaGovSaveStatus.isEmpty {
-                                Text(vaGovSaveStatus)
+                            HStack {
+                                Text("Status:")
                                     .font(.caption)
-                                    .foregroundColor(vaGovSaveStatus.contains("Error") ? .red : .green)
+                                    .foregroundColor(.secondary)
+                                
+                                Text(vaGovService.hasFormsAPIKey() ? "Configured" : "Not configured")
+                                    .font(.caption)
+                                    .foregroundColor(vaGovService.hasFormsAPIKey() ? .green : .orange)
+                                
+                                Spacer()
+                                
+                                Image(systemName: vaGovService.hasFormsAPIKey() ? "checkmark.circle.fill" : "exclamationmark.triangle")
+                                    .foregroundColor(vaGovService.hasFormsAPIKey() ? .green : .orange)
                             }
+                        }
+                        .padding()
+                        .background(Color(NSColor.controlBackgroundColor))
+                        .cornerRadius(8)
+                        
+                        if !vaGovSaveStatus.isEmpty {
+                            Text(vaGovSaveStatus)
+                                .font(.caption)
+                                .foregroundColor(vaGovSaveStatus.contains("Error") ? .red : .green)
+                                .padding(.horizontal)
                         }
                         
                         VStack(alignment: .leading, spacing: 8) {
@@ -338,13 +440,13 @@ struct SettingsView: View {
                                 .font(.headline)
                             
                             Picker("Environment", selection: $vaGovEnvironment) {
-                                Text("Sandbox").tag("sandbox")
-                                Text("Production").tag("production")
+                                ForEach(VAGovAPIService.Environment.allCases, id: \.self) { env in
+                                    Text(env.displayName).tag(env)
+                                }
                             }
                             .pickerStyle(.segmented)
                             .onChange(of: vaGovEnvironment) { _, newValue in
-                                let environment = VAGovAPIService.Environment(rawValue: newValue) ?? .sandbox
-                                vaGovService.setEnvironment(environment)
+                                vaGovService.setEnvironment(newValue)
                             }
                         }
                         
@@ -358,7 +460,7 @@ struct SettingsView: View {
                                     testVAGovConnection()
                                 }
                                 .buttonStyle(.bordered)
-                                .disabled(vaGovTestConnectionStatus == .testing || !vaGovService.hasAPIKey())
+                                .disabled(vaGovTestConnectionStatus == .testing || (!vaGovService.hasBenefitsAPIKey() && !vaGovService.hasFormsAPIKey()))
                                 
                                 Spacer()
                                 
@@ -381,7 +483,7 @@ struct SettingsView: View {
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                                 Spacer()
-                                Text(vaGovEnvironment == "sandbox" ? "Sandbox" : "Production")
+                                Text(vaGovEnvironment.displayName)
                                     .font(.caption)
                                     .foregroundColor(.primary)
                             }
@@ -391,19 +493,29 @@ struct SettingsView: View {
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                                 Spacer()
-                                Text(vaGovEnvironment == "sandbox" ? "https://sandbox-api.va.gov" : "https://api.va.gov")
+                                Text("https://\(vaGovEnvironment.rawValue)")
                                     .font(.caption)
                                     .foregroundColor(.primary)
                             }
                             
                             HStack {
-                                Text("API Key:")
+                                Text("Benefits API Key:")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                                 Spacer()
-                                Text(vaGovService.hasAPIKey() ? "Configured" : "Not configured")
+                                Text(vaGovService.hasBenefitsAPIKey() ? "Configured" : "Not configured")
                                     .font(.caption)
-                                    .foregroundColor(vaGovService.hasAPIKey() ? .green : .orange)
+                                    .foregroundColor(vaGovService.hasBenefitsAPIKey() ? .green : .orange)
+                            }
+                            
+                            HStack {
+                                Text("Forms API Key:")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                Spacer()
+                                Text(vaGovService.hasFormsAPIKey() ? "Configured" : "Not configured")
+                                    .font(.caption)
+                                    .foregroundColor(vaGovService.hasFormsAPIKey() ? .green : .orange)
                             }
                         }
                         .padding()
@@ -472,39 +584,6 @@ struct SettingsView: View {
                 .padding()
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(NSColor.windowBackgroundColor))
-        .alert("Change OpenAI API Key", isPresented: $showOpenAIAPIKeyAlert) {
-            SecureField("New OpenAI API Key", text: $newOpenAIAPIKey)
-            Button("Cancel", role: .cancel) { }
-            Button("Save") {
-                saveOpenAIAPIKey()
-            }
-        } message: {
-            Text("Enter your new OpenAI API key. This will be stored securely in the macOS Keychain.")
-        }
-        .alert("Change PaulBox API Key", isPresented: $showPaulBoxAPIKeyAlert) {
-            SecureField("New PaulBox API Key", text: $newPaulBoxAPIKey)
-            Button("Cancel", role: .cancel) { }
-            Button("Save") {
-                savePaulBoxAPIKey()
-            }
-        } message: {
-            Text("Enter your new PaulBox API key. This will be stored securely in the macOS Keychain.")
-        }
-        .alert("Change VA.GOV API Key", isPresented: $showVAGovAPIKeyAlert) {
-            SecureField("New VA.GOV API Key", text: $newVAGovAPIKey)
-            Button("Cancel", role: .cancel) { }
-            Button("Save") {
-                saveVAGovAPIKey()
-            }
-        } message: {
-            Text("Enter your new VA.GOV API key. This will be stored securely in the macOS Keychain.")
-        }
-            .onAppear {
-                loadSettings()
-            }
-        }
         
         // MARK: - Helper Methods
         private func loadSettings() {
@@ -512,9 +591,9 @@ struct SettingsView: View {
             paulBoxAPIKey = loadPaulBoxAPIKeyFromKeychain()
             
             // Load VA.GOV environment
-            vaGovEnvironment = UserDefaults.standard.string(forKey: "vaGovEnvironment") ?? "sandbox"
-            let environment = VAGovAPIService.Environment(rawValue: vaGovEnvironment) ?? .sandbox
-            vaGovService.setEnvironment(environment)
+            let environmentString = UserDefaults.standard.string(forKey: "vaGovEnvironment") ?? VAGovAPIService.Environment.sandbox.rawValue
+            vaGovEnvironment = VAGovAPIService.Environment(rawValue: environmentString) ?? .sandbox
+            vaGovService.setEnvironment(vaGovEnvironment)
             
             // Load other settings from UserDefaults
             fromEmail = UserDefaults.standard.string(forKey: "emailFromAddress") ?? "matt@mrdula.co"
@@ -529,11 +608,14 @@ struct SettingsView: View {
             // Save settings to UserDefaults
             UserDefaults.standard.set(fromEmail, forKey: "emailFromAddress")
             UserDefaults.standard.set(domain, forKey: "emailDomain")
-            UserDefaults.standard.set(vaGovEnvironment, forKey: "vaGovEnvironment")
+            UserDefaults.standard.set(vaGovEnvironment.rawValue, forKey: "vaGovEnvironment")
             UserDefaults.standard.set(enableNotifications, forKey: "emailNotificationsEnabled")
             UserDefaults.standard.set(enableClaimNotifications, forKey: "emailClaimNotificationsEnabled")
             UserDefaults.standard.set(enableDocumentNotifications, forKey: "emailDocumentNotificationsEnabled")
             UserDefaults.standard.set(enableActivityNotifications, forKey: "emailActivityNotificationsEnabled")
+            
+            // Ensure environment is set in service
+            vaGovService.setEnvironment(vaGovEnvironment)
             
             dismiss()
         }
@@ -632,19 +714,39 @@ struct SettingsView: View {
             }
         }
     
-        private func saveVAGovAPIKey() {
-            guard !newVAGovAPIKey.isEmpty else {
+        private func saveVAGovBenefitsAPIKey() {
+            guard !newVAGovBenefitsAPIKey.isEmpty else {
                 vaGovSaveStatus = "Error: API key cannot be empty"
                 return
             }
             
             do {
-                try vaGovService.storeAPIKey(newVAGovAPIKey)
-                vaGovSaveStatus = "VA.GOV API key saved successfully"
-                newVAGovAPIKey = ""
+                try vaGovService.storeBenefitsAPIKey(newVAGovBenefitsAPIKey)
+                vaGovSaveStatus = "Benefits Reference Data API key saved successfully"
+                newVAGovBenefitsAPIKey = ""
             } catch {
-                vaGovSaveStatus = "Error saving VA.GOV API key: \(error.localizedDescription)"
+                vaGovSaveStatus = "Error saving Benefits Reference Data API key: \(error.localizedDescription)"
             }
+        }
+        
+        private func saveVAGovFormsAPIKey() {
+            guard !newVAGovFormsAPIKey.isEmpty else {
+                vaGovSaveStatus = "Error: API key cannot be empty"
+                return
+            }
+            
+            do {
+                try vaGovService.storeFormsAPIKey(newVAGovFormsAPIKey)
+                vaGovSaveStatus = "Forms API key saved successfully"
+                newVAGovFormsAPIKey = ""
+            } catch {
+                vaGovSaveStatus = "Error saving Forms API key: \(error.localizedDescription)"
+            }
+        }
+        
+        // Legacy method for backward compatibility
+        private func saveVAGovAPIKey() {
+            saveVAGovBenefitsAPIKey()
         }
     
         // MARK: - Keychain Methods

@@ -61,8 +61,8 @@ struct SearchResult: Identifiable, Hashable {
         \(veteran.serviceStartDate.formatted())
         \(veteran.serviceEndDate.formatted())
         \(veteran.addressStreet ?? "")
-        \(veteran.addressCity)
-        \(veteran.addressState)
+        \(veteran.addressCity ?? "")
+        \(veteran.addressState ?? "")
         \(veteran.addressZip)
         """.lowercased()
         self.associatedVeteran = veteran
