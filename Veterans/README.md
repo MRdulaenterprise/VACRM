@@ -8,7 +8,7 @@ A comprehensive Customer Relationship Management (CRM) application designed spec
 - **Real-time Statistics**: Total veterans, active claims, pending claims, and approved claims
 - **Visual Metrics Cards**: Gradient backgrounds with hover effects and animations
 - **Quick Actions**: Direct access to add veterans, claims, and upload documents
-- **Modern Sidebar Navigation**: Clean, intuitive navigation with SF Symbols
+- **Modern Sidebar Navigation**: Clean, intuitive navigation with SF Symbols and custom app logo
 
 ### 👥 Comprehensive Veteran Management
 - **Complete Veteran Profiles**: 200+ fields covering all aspects of veteran information
@@ -29,6 +29,7 @@ A comprehensive Customer Relationship Management (CRM) application designed spec
 - **Status Tracking**: Real-time status updates with priority levels
 - **Activity Logging**: Detailed activity tracking
 - **Condition Management**: Complex medical condition relationships and hierarchies
+- **Full Edit Capability**: Complete edit modal with all 80+ fields organized in collapsible sections
 
 ### 🎯 Kanban Board Workflow Management
 - **Visual Claim Tracking**: Drag-and-drop interface for claim status management
@@ -37,18 +38,23 @@ A comprehensive Customer Relationship Management (CRM) application designed spec
 - **Claim Cards**: Detailed claim information with veteran association
 - **Priority Indicators**: Visual priority levels and deadline tracking
 - **Quick Actions**: Direct access to edit claims from board view
+- **Search Functionality**: Search bar at the top to filter claims by number, type, condition, veteran name, or status
 
 ### 🤖 AI-Powered Copilot Assistant (Enhanced)
 - **OpenAI Integration**: GPT-4 powered assistance for VA claims guidance
 - **Advanced De-identification**: GPT-4 based PHI removal following DeID-GPT research
 - **Chat Sessions**: Persistent conversation history with veterans and cases
 - **Document Analysis**: Upload and analyze PDF documents with AI assistance
+- **Document Context**: Documents are automatically included in chat context with content summaries
+- **Upload Progress**: Visual progress indicator during document processing
+- **Attached Documents UI**: Horizontal scroll view showing all attached documents as chips
 - **Prompt Templates**: Pre-configured templates for common VA scenarios
 - **Professional Settings Modal**: Compact, two-column layout with comprehensive configuration
-- **PDF Export**: Export chat conversations as professional documents
+- **PDF Export**: Export chat conversations as professional documents with proper metadata
 - **Audit Logging**: Complete tracking of all AI interactions
 - **Secure Storage**: Encrypted conversation storage with keychain integration
 - **Fallback System**: Automatic fallback to rule-based de-identification if GPT-4 fails
+- **Keychain Error Handling**: Robust Keychain error handling with fallback mechanisms
 
 ### 🔍 Advanced Search & Discovery
 - **Global Search**: Search across veterans, claims, documents, and activities
@@ -57,6 +63,7 @@ A comprehensive Customer Relationship Management (CRM) application designed spec
 - **Content Search**: Search within document content and extracted text
 - **Veteran Association**: Automatic linking of search results to veteran profiles
 - **Search History**: Track and revisit previous searches
+- **VA Forms Search**: Unified search bar for VA.gov Forms API with real-time filtering
 
 ### 📄 Document Management System (Enhanced)
 - **File Organization**: Upload and categorize documents by type
@@ -68,6 +75,7 @@ A comprehensive Customer Relationship Management (CRM) application designed spec
 - **Secure Storage**: Encrypted document storage with access controls
 - **Local Storage**: Documents saved locally with encryption
 - **Security-Scoped Access**: Proper macOS file access handling
+- **Encryption Fallback**: Graceful handling of encryption failures with unencrypted storage option
 
 ### 🔄 Activity & Audit System
 - **Comprehensive Logging**: Track all user and system actions
@@ -94,15 +102,27 @@ A comprehensive Customer Relationship Management (CRM) application designed spec
 - **Condition History**: Track changes and updates over time
 - **Visual Management**: Card-based interface for easy condition management
 
+### 🌐 VA.gov API Integration (Enhanced)
+- **Multi-Key Support**: Separate API keys for Benefits Reference Data and Forms API
+- **Forms API**: Browse and search VA forms with direct URL access
+- **Benefits Reference Data**: Access to states, countries, and other reference data
+- **Facilities API**: VA facility information (when authorized)
+- **Unified Search**: Single search bar for all VA.gov data types
+- **Environment Switching**: Toggle between Sandbox and Production environments
+- **Connection Testing**: Built-in API connection testing with detailed status
+- **Error Handling**: Comprehensive error messages for authorization and decoding issues
+- **Flexible Decoding**: Handles mixed data types and optional fields in API responses
+
 ### 🛡️ HIPAA Compliance & Security (Enhanced)
 - **Advanced De-identification**: GPT-4 powered PHI removal with 18+ HIPAA Safe Harbor identifiers
 - **Data Encryption**: End-to-end encryption for all sensitive data using AES-256-GCM
-- **Keychain Storage**: Secure API key storage using macOS Keychain
+- **Keychain Storage**: Secure API key storage using macOS Keychain with fallback mechanisms
 - **Audit Logging**: Complete audit trail for compliance requirements
 - **Access Controls**: Role-based access to sensitive information
 - **TLS 1.3+**: Secure communication protocols for all API calls
 - **PHI Pattern Detection**: Comprehensive regex patterns for medical and veteran-specific identifiers
 - **Common Words Filtering**: Prevents false positives in PHI detection
+- **Keychain Error Recovery**: Automatic fallback for Keychain operations with proper error handling
 
 ## 🎨 Modern UI/UX Features (Enhanced)
 
@@ -113,6 +133,7 @@ A comprehensive Customer Relationship Management (CRM) application designed spec
 - **Dark Mode Support**: Full light/dark mode compatibility
 - **Smooth Animations**: 60fps transitions and hover effects
 - **Compact UI**: Professional, space-efficient design with smaller text and cards
+- **Custom App Logo**: Branded app icon in sidebar navigation
 
 ### Navigation
 - **Two-Column Layout**: Streamlined sidebar and content views
@@ -123,11 +144,13 @@ A comprehensive Customer Relationship Management (CRM) application designed spec
 
 ### Forms & Input
 - **Grouped Forms**: Organized sections with collapsible groups
+- **Collapsible Sections**: Smooth animations with optimized tap targets
 - **Material Backgrounds**: Modern glass effects
 - **Field Validation**: Real-time validation with visual feedback
 - **Progressive Disclosure**: Show/hide advanced options
 - **Large Controls**: macOS-optimized input controls
 - **Professional Modals**: Compact, non-scrolling settings and prompt modals
+- **Input Sanitization**: Automatic trimming and validation of text inputs
 
 ## 📊 Data Models (Enhanced)
 
@@ -227,6 +250,7 @@ extractedText, deidentifiedText, summary, isProcessed
 - **Security**: TLS 1.3+ encryption and security headers
 - **Error Handling**: Comprehensive error handling with user-friendly messages
 - **Main Thread Safety**: Proper actor isolation for UI updates
+- **Document Context**: Automatic inclusion of attached documents in chat context
 
 ### 📧 Paubox Email Integration
 - **HIPAA Compliance**: BAA (Business Associate Agreement) compliant email service
@@ -238,9 +262,19 @@ extractedText, deidentifiedText, summary, isProcessed
 - **Error Handling**: Comprehensive error handling and retry logic
 - **Configuration**: Easy setup through settings interface
 
+### 🌐 VA.gov API Integration
+- **Multi-Key Authentication**: Separate keys for Benefits and Forms APIs
+- **Forms API**: Browse, search, and access VA forms with direct URL links
+- **Benefits Reference Data**: States, countries, and reference data
+- **Facilities API**: VA facility information (when authorized)
+- **Environment Support**: Sandbox and Production environments
+- **Connection Testing**: Built-in API connection verification
+- **Error Handling**: Detailed error messages for debugging
+- **Flexible Data Models**: Handles various API response formats
+
 ### 🔐 Security & Compliance (Enhanced)
 - **Advanced De-identification**: GPT-4 powered PHI removal following DeID-GPT research
-- **Keychain Integration**: Secure storage of API keys and credentials
+- **Keychain Integration**: Secure storage of API keys and credentials with fallback
 - **Data Encryption**: End-to-end encryption for sensitive data using AES-256-GCM
 - **PHI Protection**: Automatic de-identification of protected health information
 - **Audit Trails**: Complete audit logging for compliance requirements
@@ -248,6 +282,7 @@ extractedText, deidentifiedText, summary, isProcessed
 - **Secure Communication**: TLS 1.3+ for all external communications
 - **18+ HIPAA Identifiers**: Comprehensive detection of Safe Harbor identifiers
 - **Common Words Filtering**: Prevents false positives in PHI detection
+- **Keychain Error Recovery**: Automatic fallback for Keychain operations
 
 ## 🛠 Technical Architecture (Enhanced)
 
@@ -274,6 +309,7 @@ extractedText, deidentifiedText, summary, isProcessed
 - **Chat Persistence**: Secure storage of conversation history
 - **Redaction Logging**: Detailed logs of PHI redactions
 - **Error Handling**: Comprehensive error handling with fallback systems
+- **Document Association**: Automatic linking of documents to chat sessions
 
 ### Email Services
 - **Paubox Integration**: HIPAA-compliant email service
@@ -313,15 +349,16 @@ extractedText, deidentifiedText, summary, isProcessed
 ### Adding a Veteran
 1. Click the "+" button in the toolbar
 2. Select "Add Veteran" from the dropdown
-3. Fill out the comprehensive veteran form
+3. Fill out the comprehensive veteran form with collapsible sections
 4. Save to add to the system
 
 ### Managing Claims
 1. Select a veteran from the sidebar
 2. Navigate to the Claims section
 3. Add new claims with detailed information
-4. Track medical conditions and evidence
-5. Monitor appeals and hearings
+4. Edit claims using the comprehensive edit modal (80+ fields)
+5. Track medical conditions and evidence
+6. Monitor appeals and hearings
 
 ### Document Management (Enhanced)
 1. Select "Upload Documents" from the toolbar
@@ -329,6 +366,7 @@ extractedText, deidentifiedText, summary, isProcessed
 3. Categorize documents appropriately
 4. Associate with veterans and claims
 5. Documents are automatically encrypted and stored locally
+6. Upload documents in Copilot chat for AI analysis
 
 ### Dashboard Overview
 1. View real-time statistics
@@ -352,14 +390,16 @@ extractedText, deidentifiedText, summary, isProcessed
 6. Enable/disable de-identification features
 7. Choose between GPT-4 and rule-based de-identification
 8. Test connection with sample query
+9. Upload documents directly in chat for analysis
 
 ### Kanban Board Usage
 1. Navigate to Kanban Board from sidebar
-2. View claims organized by status columns
-3. Drag and drop claims between status columns
-4. Click on claim cards to edit details
-5. Monitor workflow progress visually
-6. Track priority levels and deadlines
+2. Use search bar to filter claims
+3. View claims organized by status columns
+4. Drag and drop claims between status columns
+5. Click on claim cards to edit details
+6. Monitor workflow progress visually
+7. Track priority levels and deadlines
 
 ### Advanced Search
 1. Use the global search bar in the toolbar
@@ -367,8 +407,17 @@ extractedText, deidentifiedText, summary, isProcessed
 3. Use filters to narrow results by type
 4. Click on results to navigate to relevant records
 5. Search within document content and extracted text
+6. Search VA forms in the VA.gov section
 
-### Prompt Template Management (New)
+### VA.gov Integration
+1. Navigate to VA.gov section from sidebar
+2. Configure API keys in Settings (Benefits and Forms keys)
+3. Browse VA Forms with search functionality
+4. Click forms to open in browser
+5. View Benefits Reference Data
+6. Test API connections
+
+### Prompt Template Management
 1. Navigate to Copilot section
 2. Click the document icon in the toolbar
 3. Create, edit, and manage prompt templates
@@ -382,11 +431,14 @@ extractedText, deidentifiedText, summary, isProcessed
 - **PDF Processing**: Extract text from uploaded PDF documents
 - **Content Analysis**: AI-powered analysis of document content
 - **Advanced De-identification**: GPT-4 powered PHI removal with comprehensive pattern detection
+- **Document Context**: Documents automatically included in chat context
 - **Template Matching**: Match documents to VA form types
 - **Evidence Extraction**: Identify key evidence from medical records
 - **Summary Generation**: AI-generated document summaries
 - **Redaction Logging**: Detailed logs of all PHI redactions
 - **Fallback System**: Automatic fallback to rule-based de-identification
+- **Upload Progress**: Visual feedback during document processing
+- **Encryption Handling**: Graceful handling of encryption failures
 
 ### Prompt Template System (Enhanced)
 - **Pre-configured Templates**: Ready-to-use prompts for common VA scenarios
@@ -425,6 +477,37 @@ extractedText, deidentifiedText, summary, isProcessed
 
 ## 🆕 Recent Updates & Improvements
 
+### File Upload & Document Processing (Latest)
+- **Fixed File Upload**: Resolved file importer presentation issues with proper view hierarchy
+- **Document Association**: Automatic linking of documents to chat sessions with retry logic
+- **Upload Progress**: Visual progress indicator during document processing
+- **Attached Documents UI**: Horizontal scroll view showing all attached documents
+- **Document Context**: Documents automatically included in OpenAI chat context
+- **Keychain Error Handling**: Robust Keychain error handling with fallback to unencrypted storage
+- **Encryption Fallback**: Graceful handling of encryption failures (error -34018)
+- **Session Persistence**: Ensures chat sessions are saved before document processing
+
+### PDF Export (Latest)
+- **Fixed PDF Export Crash**: Replaced KVC with proper PDFDocumentAttribute API
+- **Metadata Handling**: Proper PDF metadata using PDFDocumentAttribute enum
+- **Keywords Support**: Keywords appended to Subject attribute (not supported as separate field)
+- **Type Safety**: Proper type conversion for PDF document attributes
+
+### UI/UX Improvements (Latest)
+- **Collapsible Sections**: Optimized animations and tap targets for better responsiveness
+- **Dropdown Fixes**: Resolved tap gesture conflicts in collapsible sections
+- **Search Functionality**: Added search bars to Kanban board and VA Forms
+- **Edit Claim Modal**: Complete edit modal with all 80+ fields in collapsible sections
+- **Custom App Logo**: Branded app icon in sidebar navigation
+- **Input Validation**: Comprehensive validation with error alerts
+
+### VA.gov API Integration (Latest)
+- **Multi-Key Support**: Separate API keys for Benefits and Forms APIs
+- **Forms API Decoding**: Fixed decoding issues with snake_case fields, mixed types, and optional fields
+- **Error Handling**: Enhanced error messages for debugging API issues
+- **URL Opening**: Click forms to open in browser
+- **Unified Search**: Single search bar for all VA.gov data
+
 ### Enhanced De-identification System
 - **GPT-4 Integration**: Advanced AI-powered de-identification following DeID-GPT research
 - **18+ HIPAA Identifiers**: Comprehensive detection of Safe Harbor identifiers including:
@@ -437,13 +520,6 @@ extractedText, deidentifiedText, summary, isProcessed
 - **Fallback System**: Automatic fallback to rule-based method if GPT-4 fails
 - **Detailed Logging**: Comprehensive redaction logs for compliance
 
-### UI/UX Improvements
-- **Professional Settings Modal**: Compact, two-column layout without scrolling
-- **Smaller Text & Cards**: More professional, space-efficient design
-- **Close Buttons**: Added to all modals for better user experience
-- **Two-Column Layout**: Streamlined interface for better workflow
-- **Icon Compatibility**: Updated icons for broader macOS compatibility
-
 ### Technical Enhancements
 - **Build Success**: Resolved all compilation errors and warnings
 - **Actor Isolation**: Proper MainActor usage for UI updates
@@ -451,6 +527,7 @@ extractedText, deidentifiedText, summary, isProcessed
 - **Migration Handling**: Fixed CoreData migration errors for optional fields
 - **Security-Scoped Access**: Proper macOS file access handling
 - **Error Handling**: Comprehensive error handling throughout the application
+- **Keychain Fallback**: Automatic fallback for Keychain operations
 
 ### Data Model Improvements
 - **Optional Fields**: Made address fields optional to prevent migration errors
@@ -465,7 +542,7 @@ extractedText, deidentifiedText, summary, isProcessed
 - **Calendar Sync**: Appointment scheduling and calendar integration
 - **Advanced Analytics**: Data insights and trends analysis
 - **Backup & Sync**: Cloud backup capabilities with CloudKit
-- **API Integration**: VA.gov API connectivity for real-time claim status
+- **API Integration**: Enhanced VA.gov API connectivity for real-time claim status
 - **Mobile Companion**: iOS companion app for field work
 - **Voice Integration**: Voice commands and dictation support
 - **Multi-language Support**: Internationalization for diverse veteran populations
@@ -497,6 +574,7 @@ This CRM is specifically designed for veteran service organizations and includes
 ### Integration Requirements
 - **OpenAI API Key**: Required for AI Copilot functionality
 - **Paubox Account**: Required for HIPAA-compliant email services
+- **VA.gov API Keys**: Optional, for Benefits Reference Data and Forms API access
 - **macOS 15.0+**: Minimum system requirements
 - **Internet Connection**: Required for AI and email services
 
@@ -527,6 +605,9 @@ This CRM is specifically designed for veteran service organizations and includes
 - **Security**: End-to-end encryption with keychain storage
 - **Build System**: Clean compilation with proper error handling
 - **Documentation**: Complete project documentation and usage guides
+- **File Upload**: Fixed file upload with document association
+- **PDF Export**: Fixed PDF export with proper metadata handling
+- **VA.gov Integration**: Multi-key API support with Forms and Benefits APIs
 
 ### 🎯 Ready for Production
 The Veterans Claims Foundation CRM is **production-ready** with:
@@ -537,3 +618,6 @@ The Veterans Claims Foundation CRM is **production-ready** with:
 - ✅ Secure data handling
 - ✅ AI-powered assistance
 - ✅ Modern macOS integration
+- ✅ Robust error handling
+- ✅ File upload and document processing
+- ✅ PDF export functionality

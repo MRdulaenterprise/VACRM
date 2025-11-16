@@ -33,6 +33,30 @@ Once you receive a **production API key** from the VA, it should work for **all 
 
 ---
 
+## Recent Updates & Improvements
+
+### Multi-Key Implementation (Latest)
+- **Separate Key Storage**: Benefits and Forms API keys stored separately in Keychain
+- **UI Updates**: Separate input fields and status indicators for each key
+- **API Routing**: Automatic key selection based on endpoint
+- **Connection Testing**: Tests both keys independently
+- **Migration Support**: Automatic migration from single key to multi-key (if needed)
+
+### Forms API Enhancements (Latest)
+- **Decoding Fixes**: Resolved snake_case field mapping issues
+- **Mixed Type Handling**: Flexible decoding for `benefit_categories` (strings, objects, numbers)
+- **Optional Fields**: Made `sha256` optional to handle null values
+- **Error Messages**: Enhanced error messages for debugging decoding issues
+- **URL Opening**: Click forms to open in browser
+
+### Error Handling (Latest)
+- **Empty Response Detection**: Detects and reports empty API responses
+- **Authorization Errors**: Clear messages for 403 Forbidden errors
+- **Decoding Errors**: Detailed error messages with path information
+- **Connection Testing**: Comprehensive connection testing with status indicators
+
+---
+
 ## Migration Plan: Revert to Single Key
 
 ### Prerequisites
@@ -597,7 +621,6 @@ If you're unsure about the production key:
 
 ---
 
-**Last Updated**: [Date when production key is received]  
+**Last Updated**: January 2025  
 **Migration Completed**: [ ] Yes [ ] No  
 **Production Key Tested**: [ ] Yes [ ] No
-
