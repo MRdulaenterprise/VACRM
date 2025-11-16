@@ -54,35 +54,71 @@ class CopilotEncryption {
 
     private static func saveKeyToKeychain(_ key: SymmetricKey) throws {
         let keyData = key.withUnsafeBytes { Data(Array($0)) }
-        let query: [String: Any] = [
+        
+        // First, try to delete existing item
+        let deleteQuery: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: serviceName,
+            kSecAttrAccount as String: keyTag
+        ]
+        SecItemDelete(deleteQuery as CFDictionary)
+        
+        // Build save query - try without kSecUseDataProtectionKeychain first
+        var query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: serviceName,
             kSecAttrAccount as String: keyTag,
             kSecValueData as String: keyData,
-            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly,
-            kSecUseDataProtectionKeychain as String: true // Use data protection
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
         ]
+        
+        // Try adding with data protection keychain (macOS 10.15+)
+        if #available(macOS 10.15, *) {
+            query[kSecUseDataProtectionKeychain as String] = true
+        }
 
-        SecItemDelete(query as CFDictionary) // Delete existing item if any
-        let status = SecItemAdd(query as CFDictionary, nil)
+        var status = SecItemAdd(query as CFDictionary, nil)
+        
+        // If that fails, try without data protection keychain
+        if status != errSecSuccess {
+            print("⚠️ Keychain save with data protection failed (status: \(status)), trying without...")
+            query.removeValue(forKey: kSecUseDataProtectionKeychain as String)
+            status = SecItemAdd(query as CFDictionary, nil)
+        }
+        
         guard status == errSecSuccess else {
+            print("❌ Keychain save failed with status: \(status) (errSecMissingEntitlement = -34018)")
             throw CopilotEncryptionError.keychainError(status)
         }
     }
 
     private static func loadKeyFromKeychain() -> SymmetricKey? {
-        let query: [String: Any] = [
+        // Try with data protection keychain first
+        var query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: serviceName,
             kSecAttrAccount as String: keyTag,
             kSecReturnData as String: kCFBooleanTrue!,
             kSecMatchLimit as String: kSecMatchLimitOne
         ]
+        
+        if #available(macOS 10.15, *) {
+            query[kSecUseDataProtectionKeychain as String] = true
+        }
 
         var item: CFTypeRef?
-        let status = SecItemCopyMatching(query as CFDictionary, &item)
+        var status = SecItemCopyMatching(query as CFDictionary, &item)
+
+        // If that fails, try without data protection keychain
+        if status != errSecSuccess {
+            query.removeValue(forKey: kSecUseDataProtectionKeychain as String)
+            status = SecItemCopyMatching(query as CFDictionary, &item)
+        }
 
         guard status == errSecSuccess, let keyData = item as? Data else {
+            if status != errSecItemNotFound {
+                print("⚠️ Keychain load failed with status: \(status)")
+            }
             return nil
         }
 

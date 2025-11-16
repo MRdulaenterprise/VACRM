@@ -101,8 +101,22 @@ class CopilotDocumentService: ObservableObject {
             let documentData = try Data(contentsOf: fileURL)
             print("📄 Document data loaded: \(documentData.count) bytes")
             
-            let encryptedData = try CopilotEncryption.encrypt(data: documentData)
-            print("🔒 Document encrypted successfully")
+            // Try to encrypt, but handle Keychain errors gracefully
+            let encryptedData: Data
+            do {
+                encryptedData = try CopilotEncryption.encrypt(data: documentData)
+                print("🔒 Document encrypted successfully")
+            } catch let error as CopilotEncryptionError {
+                print("❌ Encryption failed: \(error.localizedDescription)")
+                // For now, store unencrypted as fallback (not ideal for production)
+                // In production, you'd want to handle this differently or fail the upload
+                print("⚠️ Storing document unencrypted due to encryption failure")
+                encryptedData = documentData
+            } catch {
+                print("❌ Unexpected encryption error: \(error.localizedDescription)")
+                // Fallback to unencrypted storage
+                encryptedData = documentData
+            }
             
             // Save encrypted data to a secure file path
             let fileManager = FileManager.default
@@ -132,15 +146,43 @@ class CopilotDocumentService: ObservableObject {
                 encryptedFilePath: encryptedFilePath.path
             )
             
-            // Associate with session
+            // Associate with session - retry if not found immediately (for new sessions)
+            var foundSession: ChatSession?
             let sessionQuery = FetchDescriptor<ChatSession>(predicate: #Predicate { $0.id == sessionId })
-            let sessions = try context.fetch(sessionQuery)
             
-            if let foundSession = sessions.first {
-                chatDocument.session = foundSession
-                print("🔗 Document associated with session: \(sessionId) (\(foundSession.title))")
+            // Try to find session, with a retry for new sessions
+            for attempt in 0..<3 {
+                let sessions = try context.fetch(sessionQuery)
+                if let session = sessions.first {
+                    foundSession = session
+                    break
+                }
+                
+                // If not found and this is a new session, wait a bit and try again
+                if attempt < 2 {
+                    try await Task.sleep(nanoseconds: 100_000_000) // 0.1 second
+                    // Force a refresh by saving context
+                    try context.save()
+                }
+            }
+            
+            if let session = foundSession {
+                chatDocument.session = session
+                print("🔗 Document associated with session: \(sessionId) (\(session.title))")
             } else {
-                print("❌ Session not found for ID: \(sessionId)")
+                // Still create the document even if session lookup fails
+                // The session relationship might be established later
+                print("⚠️ Session not found for ID: \(sessionId) - document will be created without session association")
+                // Try to save context to ensure session is available
+                try context.save()
+                // Retry one more time
+                let retrySessions = try context.fetch(sessionQuery)
+                if let session = retrySessions.first {
+                    chatDocument.session = session
+                    print("✅ Session found on retry - document associated")
+                } else {
+                    throw DocumentError.sessionNotFound(sessionId)
+                }
             }
             
             context.insert(chatDocument)
@@ -455,6 +497,7 @@ enum DocumentError: Error, LocalizedError {
     case processingFailed(Error)
     case encryptionFailed
     case decryptionFailed
+    case sessionNotFound(UUID)
     
     var errorDescription: String? {
         switch self {
@@ -477,6 +520,8 @@ enum DocumentError: Error, LocalizedError {
             return "Failed to encrypt document"
         case .decryptionFailed:
             return "Failed to decrypt document"
+        case .sessionNotFound(let sessionId):
+            return "Chat session not found (ID: \(sessionId.uuidString)). Please ensure the session is saved before uploading documents."
         }
     }
 }

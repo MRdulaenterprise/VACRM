@@ -20,13 +20,17 @@ struct ChatInterfaceView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var messages: [ChatMessage]
     
+    // File upload state - passed from parent to avoid Menu/fileImporter conflict
+    @Binding var showingFileUpload: Bool
+    
     @State private var currentMessage = ""
     @State private var isSending = false
     @State private var selectedTemplate: PromptTemplate?
     @State private var showingTemplatePicker = false
     @State private var showingDocumentList = false
-    @State private var showingFileUpload = false
     @State private var showingDocumentSelector = false
+    @State private var showingUploadError = false
+    @State private var uploadErrorMessage = ""
     
     // MARK: - Computed Properties
     
@@ -51,6 +55,11 @@ struct ChatInterfaceView: View {
             
             // Input Area
             inputArea
+        }
+        .alert("Upload Error", isPresented: $showingUploadError) {
+            Button("OK") { }
+        } message: {
+            Text(uploadErrorMessage)
         }
     }
     
@@ -79,26 +88,27 @@ struct ChatInterfaceView: View {
                             .font(.system(size: 12))
                             .foregroundColor(.green)
                     }
+                    
+                    if !session.documents.isEmpty {
+                        Text("📄 \(session.documents.count) document(s)")
+                            .font(.system(size: 12))
+                            .foregroundColor(.blue)
+                    }
                 }
             }
             
             Spacer()
             
             HStack(spacing: 12) {
-                // Attach Document Button
-                Menu {
-                    Button(action: { showingFileUpload = true }) {
-                        Label("Upload New File", systemImage: "doc.badge.plus")
-                    }
-                    
-                    Button(action: { showingDocumentSelector = true }) {
-                        Label("Select from Documents", systemImage: "folder")
-                    }
-                } label: {
-                    Image(systemName: "paperclip")
+                // Single Upload Button
+                Button(action: {
+                    triggerFileUpload()
+                }) {
+                    Image(systemName: "doc.badge.plus")
                         .font(.system(size: 16))
                 }
                 .buttonStyle(PlainButtonStyle())
+                .help("Upload File")
                 
                 // View Documents Button
                 Button(action: { showingDocumentList = true }) {
@@ -157,6 +167,47 @@ struct ChatInterfaceView: View {
     
     private var inputArea: some View {
         VStack(spacing: 12) {
+            // Upload Progress Indicator
+            if documentService.isProcessing {
+                HStack(spacing: 8) {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                    Text("Processing document...")
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    Text("\(Int(documentService.processingProgress * 100))%")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(.blue.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
+            }
+            
+            // Attached Documents List
+            if !session.documents.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(session.documents, id: \.id) { document in
+                            HStack(spacing: 6) {
+                                Image(systemName: "doc.fill")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.blue)
+                                Text(document.fileName)
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.primary)
+                                    .lineLimit(1)
+                            }
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(.blue.opacity(0.1), in: RoundedRectangle(cornerRadius: 6))
+                        }
+                    }
+                    .padding(.horizontal, 12)
+                }
+            }
+            
             // Template Picker
             if let template = selectedTemplate {
                 templatePreview(template)
@@ -221,13 +272,6 @@ struct ChatInterfaceView: View {
         }
         .sheet(isPresented: $showingDocumentList) {
             documentListSheet
-        }
-        .fileImporter(
-            isPresented: $showingFileUpload,
-            allowedContentTypes: [.pdf, .text, .plainText, .data],
-            allowsMultipleSelection: true
-        ) { result in
-            handleFileUpload(result)
         }
         .sheet(isPresented: $showingDocumentSelector) {
             DocumentSelectorView(
@@ -420,10 +464,30 @@ struct ChatInterfaceView: View {
                 
                 // Send ORIGINAL message to OpenAI for response (not de-identified version)
                 // This allows helpful responses to hypothetical cases
+                // Include session documents so OpenAI can reference them
+                
+                // Get fresh documents from session (force relationship refresh)
+                let sessionDocuments = Array(session.documents)
+                print("📄 Preparing to send message with \(sessionDocuments.count) document(s)")
+                
+                if !sessionDocuments.isEmpty {
+                    for (index, doc) in sessionDocuments.enumerated() {
+                        print("  Document \(index + 1): \(doc.fileName)")
+                        print("    - Has extracted text: \(doc.extractedText != nil)")
+                        print("    - Has deidentified text: \(doc.deidentifiedText != nil)")
+                        print("    - Has summary: \(doc.summary != nil)")
+                    }
+                } else {
+                    print("⚠️ No documents found in session - documents may not be properly associated")
+                }
+                
                 let messages = openAIService.createMessageArray(
                     conversationHistory: sessionMessages,
-                    currentMessage: messageText  // Use original, not de-identified
+                    currentMessage: messageText,  // Use original, not de-identified
+                    sessionDocuments: sessionDocuments  // Pass documents to OpenAI
                 )
+                
+                print("📤 Sending \(messages.count) messages to OpenAI (including system messages)")
                 
                 let response = try await openAIService.sendChatCompletion(messages: messages)
                 
@@ -474,12 +538,41 @@ struct ChatInterfaceView: View {
         }
     }
     
+    private func triggerFileUpload() {
+        print("📎 Upload button tapped - triggering file upload")
+        // Reset state first, then set to true after delay (workaround for Menu/fileImporter conflict)
+        // This ensures the Menu is fully dismissed before fileImporter presents
+        Task { @MainActor in
+            // Reset to false first
+            showingFileUpload = false
+            // Small delay to ensure Menu is fully dismissed
+            try? await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
+            print("📎 Setting showingFileUpload = true")
+            showingFileUpload = true
+        }
+    }
+    
     private func handleFileUpload(_ result: Result<[URL], Error>) {
         switch result {
         case .success(let urls):
             Task { @MainActor in
+                // Ensure session is saved to database before processing documents
+                do {
+                    try modelContext.save()
+                } catch {
+                    await MainActor.run {
+                        uploadErrorMessage = "Failed to save session: \(error.localizedDescription)"
+                        showingUploadError = true
+                    }
+                    return
+                }
+                
                 // Capture ModelContext on main actor to avoid Sendable warning
                 nonisolated(unsafe) let context = modelContext
+                
+                var successCount = 0
+                var errorMessages: [String] = []
+                
                 for url in urls {
                     do {
                         _ = try await documentService.processDocument(
@@ -488,13 +581,32 @@ struct ChatInterfaceView: View {
                             sessionId: session.id,
                             context: context
                         )
+                        successCount += 1
                     } catch {
-                        print("Failed to process document \(url.lastPathComponent): \(error)")
+                        let errorMsg = "Failed to process \(url.lastPathComponent): \(error.localizedDescription)"
+                        print("❌ \(errorMsg)")
+                        errorMessages.append(errorMsg)
+                    }
+                }
+                
+                // Show results to user
+                await MainActor.run {
+                    if !errorMessages.isEmpty {
+                        if successCount > 0 {
+                            uploadErrorMessage = "\(successCount) file(s) uploaded successfully.\n\nErrors:\n\(errorMessages.joined(separator: "\n"))"
+                        } else {
+                            uploadErrorMessage = "Failed to upload files:\n\(errorMessages.joined(separator: "\n"))"
+                        }
+                        showingUploadError = true
                     }
                 }
             }
         case .failure(let error):
-            print("File upload failed: \(error)")
+            Task { @MainActor in
+                uploadErrorMessage = "File selection failed: \(error.localizedDescription)"
+                showingUploadError = true
+            }
+            print("❌ File upload failed: \(error)")
         }
     }
     
@@ -921,7 +1033,8 @@ struct DocumentSelectionRow: View {
         session: ChatSession(title: "Test Session"),
         openAIService: OpenAIService(),
         documentService: CopilotDocumentService(),
-        pdfExporter: ChatPDFExporter()
+        pdfExporter: ChatPDFExporter(),
+        showingFileUpload: .constant(false)
     )
     .modelContainer(for: [ChatSession.self, ChatMessage.self, ChatDocument.self, PromptTemplate.self], inMemory: true)
 }

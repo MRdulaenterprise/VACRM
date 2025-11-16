@@ -29,6 +29,7 @@ struct CopilotView: View {
     @State private var showingDocumentPicker = false
     @State private var newSessionTitle = ""
     @State private var showingNewSessionDialog = false
+    @State private var showingFileUpload = false // For ChatInterfaceView file uploads
     
     // MARK: - Computed Properties
     
@@ -122,6 +123,13 @@ struct CopilotView: View {
             allowsMultipleSelection: false
         ) { result in
             handleDocumentImport(result)
+        }
+        .fileImporter(
+            isPresented: $showingFileUpload,
+            allowedContentTypes: [.pdf, .text, .plainText, .data],
+            allowsMultipleSelection: true
+        ) { result in
+            handleChatFileUpload(result)
         }
         .onAppear {
             initializeDefaultTemplates()
@@ -217,7 +225,8 @@ struct CopilotView: View {
                     session: session,
                     openAIService: openAIService,
                     documentService: documentService,
-                    pdfExporter: pdfExporter
+                    pdfExporter: pdfExporter,
+                    showingFileUpload: $showingFileUpload
                 )
             } else {
                 emptyChatView
@@ -485,6 +494,84 @@ struct CopilotView: View {
             } catch {
                 print("Failed to export session: \(error)")
             }
+        }
+    }
+    
+    private func handleChatFileUpload(_ result: Result<[URL], Error>) {
+        guard let session = selectedSession else {
+            print("❌ No session selected for file upload")
+            return
+        }
+        
+        switch result {
+        case .success(let urls):
+            Task { @MainActor in
+                // Ensure session is saved to database before processing documents
+                do {
+                    try modelContext.save()
+                } catch {
+                    print("❌ Failed to save session: \(error)")
+                    return
+                }
+                
+                // Capture ModelContext on main actor to avoid Sendable warning
+                nonisolated(unsafe) let context = modelContext
+                
+                var successCount = 0
+                var errorMessages: [String] = []
+                
+                for url in urls {
+                    do {
+                        let chatDocument = try await documentService.processDocument(
+                            fileURL: url,
+                            fileName: url.lastPathComponent,
+                            sessionId: session.id,
+                            context: context
+                        )
+                        
+                        // Ensure document is associated with session
+                        if chatDocument.session == nil {
+                            chatDocument.session = session
+                            print("🔗 Manually associated document with session")
+                        }
+                        
+                        // Save context to persist the relationship
+                        try context.save()
+                        print("💾 Context saved after document processing")
+                        
+                        // Verify document is in session
+                        let sessionDocuments = session.documents
+                        if sessionDocuments.contains(where: { $0.id == chatDocument.id }) {
+                            print("✅ Document confirmed in session.documents: \(chatDocument.fileName)")
+                        } else {
+                            print("⚠️ Document not found in session.documents - forcing refresh")
+                            // Force refresh by accessing the relationship
+                            _ = session.documents
+                            try context.save()
+                        }
+                        
+                        successCount += 1
+                        print("✅ Successfully uploaded: \(url.lastPathComponent)")
+                    } catch {
+                        let errorMsg = "Failed to process \(url.lastPathComponent): \(error.localizedDescription)"
+                        print("❌ \(errorMsg)")
+                        errorMessages.append(errorMsg)
+                    }
+                }
+                
+                // Final save to ensure everything is persisted
+                try context.save()
+                print("💾 Final context save completed")
+                
+                if !errorMessages.isEmpty {
+                    print("⚠️ Upload completed with errors: \(errorMessages.joined(separator: ", "))")
+                } else {
+                    print("✅ All \(successCount) file(s) uploaded successfully")
+                    print("📄 Session now has \(session.documents.count) document(s)")
+                }
+            }
+        case .failure(let error):
+            print("❌ File upload failed: \(error.localizedDescription)")
         }
     }
     

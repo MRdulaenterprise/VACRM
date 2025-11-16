@@ -150,32 +150,37 @@ class ChatPDFExporter: ObservableObject {
     
     /// Add metadata to PDF document
     private func addMetadata(to pdfDocument: PDFDocument, from exportData: ChatExportData) {
-        // Use proper PDF metadata attributes that PDFDocument supports
-        let metadata = [
-            "Title": "Veterans Benefits Copilot Chat Export",
-            "Author": exportData.exportedBy,
-            "Subject": "Veterans Benefits Claims Assistance",
-            "Keywords": "Veterans, Benefits, Claims, HIPAA, Confidential",
-            "Creator": "Veterans Benefits Copilot",
-            "Producer": "Veterans Benefits Copilot v1.0"
-        ]
+        // Use proper PDFDocumentAttribute API instead of KVC
+        // PDFDocument doesn't support all metadata keys via KVC (like "Keywords")
+        var attributes: [PDFDocumentAttribute: Any] = [:]
         
-        for (key, value) in metadata {
-            pdfDocument.setValue(value, forKey: key)
+        // Get existing attributes if any and convert to proper type
+        if let existingAttributes = pdfDocument.documentAttributes {
+            for (key, value) in existingAttributes {
+                if let pdfKey = key as? PDFDocumentAttribute {
+                    attributes[pdfKey] = value
+                }
+            }
         }
         
-        // Set creation and modification dates using proper PDF attributes
-        if let attributes = pdfDocument.documentAttributes {
-            var updatedAttributes = attributes
-            updatedAttributes[PDFDocumentAttribute.creationDateAttribute] = exportData.exportDate
-            updatedAttributes[PDFDocumentAttribute.modificationDateAttribute] = Date()
-            pdfDocument.documentAttributes = updatedAttributes
-        } else {
-            var attributes: [PDFDocumentAttribute: Any] = [:]
-            attributes[PDFDocumentAttribute.creationDateAttribute] = exportData.exportDate
-            attributes[PDFDocumentAttribute.modificationDateAttribute] = Date()
-            pdfDocument.documentAttributes = attributes
+        // Set supported PDF metadata attributes
+        attributes[PDFDocumentAttribute.titleAttribute] = "Veterans Benefits Copilot Chat Export"
+        attributes[PDFDocumentAttribute.authorAttribute] = exportData.exportedBy
+        attributes[PDFDocumentAttribute.subjectAttribute] = "Veterans Benefits Claims Assistance"
+        attributes[PDFDocumentAttribute.creatorAttribute] = "Veterans Benefits Copilot"
+        attributes[PDFDocumentAttribute.producerAttribute] = "Veterans Benefits Copilot v1.0"
+        attributes[PDFDocumentAttribute.creationDateAttribute] = exportData.exportDate
+        attributes[PDFDocumentAttribute.modificationDateAttribute] = Date()
+        
+        // Note: Keywords is not a standard PDFDocumentAttribute, so we include it in the Subject
+        // If you need keywords, you could add them to the Subject or use a custom metadata field
+        let keywords = "Veterans, Benefits, Claims, HIPAA, Confidential"
+        if let existingSubject = attributes[PDFDocumentAttribute.subjectAttribute] as? String {
+            attributes[PDFDocumentAttribute.subjectAttribute] = "\(existingSubject) - Keywords: \(keywords)"
         }
+        
+        // Apply all attributes at once
+        pdfDocument.documentAttributes = attributes
     }
     
     // MARK: - Helper Methods

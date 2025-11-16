@@ -519,9 +519,44 @@ extension OpenAIService {
     /// Create messages array with system prompt and conversation history
     func createMessageArray(
         conversationHistory: [ChatMessage],
-        currentMessage: String
+        currentMessage: String,
+        sessionDocuments: [ChatDocument]? = nil
     ) -> [OpenAIMessage] {
         var messages: [OpenAIMessage] = [createSystemMessage()]
+        
+        // Add document context if available
+        if let documents = sessionDocuments, !documents.isEmpty {
+            print("📄 Including \(documents.count) document(s) in OpenAI request")
+            var documentContext = "The following documents have been uploaded to this conversation:\n\n"
+            for (index, document) in documents.enumerated() {
+                documentContext += "Document \(index + 1): \(document.fileName)\n"
+                
+                // Add document text (prefer de-identified, fallback to extracted)
+                if let documentText = document.deidentifiedText ?? document.extractedText {
+                    // Limit document text to avoid token limits (first 2000 characters per document)
+                    let truncatedText = String(documentText.prefix(2000))
+                    documentContext += "Content preview: \(truncatedText)\n"
+                    print("  ✅ Added content for \(document.fileName) (\(truncatedText.count) chars)")
+                } else {
+                    print("  ⚠️ No text content available for \(document.fileName)")
+                }
+                
+                if let summary = document.summary {
+                    documentContext += "Summary: \(summary)\n"
+                    print("  ✅ Added summary for \(document.fileName)")
+                }
+                
+                documentContext += "\n"
+            }
+            
+            documentContext += "You can reference these documents when answering questions. Use the document content to provide accurate, specific information.\n\n"
+            
+            // Add document context as a system message
+            messages.append(OpenAIMessage(role: "system", content: documentContext))
+            print("📤 Document context added to messages array")
+        } else {
+            print("ℹ️ No documents to include in OpenAI request")
+        }
         
         // Add conversation history (last 10 messages to stay within token limits)
         let recentHistory = Array(conversationHistory.suffix(10))
