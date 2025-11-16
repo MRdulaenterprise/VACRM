@@ -142,7 +142,8 @@ struct CollapsibleSection<Content: View>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Button(action: {
-                withAnimation {
+                // Use shorter animation and ensure state updates immediately
+                withAnimation(.easeInOut(duration: 0.2)) {
                     isExpanded.toggle()
                 }
             }) {
@@ -162,16 +163,23 @@ struct CollapsibleSection<Content: View>: View {
                         .foregroundColor(.secondary)
                 }
                 .padding()
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle()) // ✅ Make entire area tappable
                 .background(.ultraThinMaterial)
             }
             .buttonStyle(PlainButtonStyle())
+            .contentShape(Rectangle()) // ✅ Ensure button area is fully tappable
             
             if isExpanded {
                 content
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
         .background(.ultraThinMaterial)
         .cornerRadius(12)
+        .contentShape(Rectangle()) // ✅ Ensure entire section respects taps
     }
 }
 
