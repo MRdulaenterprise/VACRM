@@ -621,6 +621,6 @@ If you're unsure about the production key:
 
 ---
 
-**Last Updated**: January 2025  
+**Last Updated**: November 20, 2025  
 **Migration Completed**: [ ] Yes [ ] No  
 **Production Key Tested**: [ ] Yes [ ] No

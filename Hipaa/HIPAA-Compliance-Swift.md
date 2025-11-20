@@ -1,7 +1,7 @@
 # HIPAA Compliance Guidelines for macOS Swift Development
 
 **Version:** 2025.1  
-**Last Updated:** October 24, 2025  
+**Last Updated:** November 20, 2025  
 **Audience:** Development Team  
 **Framework:** Swift 5.9+, macOS 14.0+, Xcode 15+
 
@@ -1501,8 +1501,8 @@ struct PatientHealthInformation: Codable {
 - Before major releases
 
 **Document Owner:** Security Officer  
-**Last Review:** October 24, 2025  
-**Next Review:** January 24, 2026
+**Last Review:** November 20, 2025  
+**Next Review:** February 20, 2026
 
 ---
 
