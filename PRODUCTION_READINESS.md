@@ -58,6 +58,9 @@
   - [ ] Email functionality
   - [ ] Document upload
   - [ ] Search functionality
+  - [ ] Data Export (select veterans, set password, export)
+  - [ ] Data Import (select file, enter password, choose conflict resolution)
+  - [ ] Import conflict resolution (skip, replace, merge)
 - [ ] Test error scenarios:
   - [ ] Network failures
   - [ ] Invalid API keys
@@ -177,6 +180,14 @@
 - View document list
 - Download documents
 
+**Data Import/Export**
+- Export selected veterans with all data
+- Set encryption password for export
+- Import encrypted data packages
+- Test conflict resolution strategies
+- Verify document files are restored
+- Check data relationships are preserved
+
 **Search Functionality**
 - Search veterans
 - Search claims
@@ -220,7 +231,7 @@ For questions or issues during testing:
 
 ---
 
-**Last Updated**: November 20, 2025
+**Last Updated**: January 2025
 **Version**: v1.0.0 - Production Ready
 **Status**: Production Ready
 

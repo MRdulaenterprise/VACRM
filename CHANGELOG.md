@@ -10,6 +10,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Planned
 - Additional features and improvements to be documented as they are implemented
 
+## [2025-01] - Data Import/Export Feature
+
+### Added
+- **Secure Data Export**: Export selected veterans with all associated data
+  - Includes veterans, claims, documents, activities, medical conditions, and relationships
+  - Password-protected ZIP archives with AES-256-GCM encryption
+  - All document files included in export package
+  - Progress tracking with real-time indicators
+  - HIPAA-compliant audit logging
+
+- **Secure Data Import**: Import encrypted data packages
+  - Decrypt and extract ZIP archives
+  - Multiple conflict resolution strategies (skip, replace, merge)
+  - Automatic document file restoration
+  - UUID preservation for data relationships
+  - Comprehensive error handling and diagnostics
+
+- **Export/Import UI**: Professional user interfaces
+  - Veteran selection interface with select all/deselect all
+  - Password entry with confirmation
+  - Real-time progress indicators
+  - Detailed error messages
+  - Import results summary with conflict reporting
+
+### Fixed
+- **ModelContext Threading**: Fixed SwiftData ModelContext warnings
+  - All context operations wrapped in MainActor.run
+  - Proper thread safety for data operations
+  - Eliminated "Unbinding from the main queue" warnings
+
+- **Document Copy Permissions**: Fixed document file access issues
+  - Smart path resolution for multiple storage locations
+  - Application Support Directory support
+  - Document Directory fallback
+  - Security-scoped resource handling
+  - Comprehensive error messages with path diagnostics
+
+- **ZIP Extraction**: Improved ZIP archive handling
+  - Better error messages and diagnostics
+  - Magic byte validation for ZIP files
+  - Subdirectory detection for extracted files
+  - Detailed logging for troubleshooting
+
+### Improved
+- **Error Handling**: Enhanced error messages throughout import/export
+  - Detailed path information in errors
+  - File size and permission diagnostics
+  - Directory contents listing for debugging
+  - User-friendly error messages
+
+- **Document Path Resolution**: Smart document location detection
+  - Checks multiple storage locations
+  - Handles absolute paths, relative paths, and URL strings
+  - Supports imported documents in VeteransDocuments directory
+  - Graceful fallback for missing files
+
 ## [2025-11] - Documentation & Maintenance Updates
 
 ### Changed
@@ -239,6 +295,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-**Last Updated**: November 20, 2025  
+**Last Updated**: January 2025  
 **Maintained By**: Veterans Claims Foundation Development Team
 

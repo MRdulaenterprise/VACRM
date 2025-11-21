@@ -61,6 +61,16 @@ The app is production-ready with all critical compilation errors fixed and compr
 - [ ] Send test email
 - [ ] View email history
 
+#### Data Import/Export
+- [ ] Export selected veterans
+- [ ] Set encryption password
+- [ ] Verify export file creation
+- [ ] Import exported file
+- [ ] Test conflict resolution (skip, replace, merge)
+- [ ] Verify all data is imported correctly
+- [ ] Check document files are restored
+- [ ] Verify relationships are preserved
+
 ### Error Scenarios
 
 #### Validation Errors
@@ -161,5 +171,5 @@ When reporting issues, please include:
 
 **Status**: Production Ready
 **Version**: v1.0.0
-**Last Updated**: November 20, 2025
+**Last Updated**: January 2025
 
