@@ -39,7 +39,15 @@ struct ContentView: View {
     @State private var showingDocumentUpload = false
     @State private var showingEmailCompose = false
     @State private var showingEmailSettings = false
+    @State private var showingExport = false
+    @State private var showingImport = false
     @State private var navigationPath = NavigationPath()
+    
+    // Veteran selection for dashboard actions
+    @State private var showingVeteranSelectorForClaim = false
+    @State private var showingVeteranSelectorForDocument = false
+    @State private var selectedVeteranForClaim: Veteran?
+    @State private var selectedVeteranForDocument: Veteran?
     
     private var searchService = SearchService()
     
@@ -97,15 +105,21 @@ struct ContentView: View {
                 .frame(minWidth: 800, idealWidth: 1000, maxWidth: 1200)
                 .frame(minHeight: 600, idealHeight: 700, maxHeight: 800)
         }
-        .sheet(isPresented: $showingAddClaim) {
-            // For now, we'll need to select a veteran first
-            Text("Please select a veteran first")
-                .frame(minWidth: 400, minHeight: 200)
+        .sheet(isPresented: $showingVeteranSelectorForClaim) {
+            VeteranSelectorView(
+                veterans: veterans,
+                onVeteranSelected: { veteran in
+                    selectedVeteranForClaim = veteran
+                    showingVeteranSelectorForClaim = false
+                }
+            )
+            .frame(minWidth: 600, idealWidth: 700, maxWidth: 800)
+            .frame(minHeight: 500, idealHeight: 600, maxHeight: 700)
         }
-        .sheet(isPresented: $showingDocumentUpload) {
-            // For now, we'll need to select a veteran first
-            Text("Please select a veteran first")
-                .frame(minWidth: 400, minHeight: 200)
+        .sheet(item: $selectedVeteranForClaim) { veteran in
+            AddClaimView(veteran: veteran)
+                .frame(minWidth: 1000, idealWidth: 1200, maxWidth: 1400)
+                .frame(minHeight: 700, idealHeight: 800, maxHeight: 1000)
         }
         .sheet(isPresented: $showingEmailCompose) {
             EmailComposeView()
@@ -116,6 +130,17 @@ struct ContentView: View {
             SettingsView()
                 .frame(minWidth: 600, idealWidth: 800, maxWidth: 1000)
                 .frame(minHeight: 400, idealHeight: 600, maxHeight: 800)
+        }
+        .sheet(isPresented: $showingExport) {
+            ExportView()
+        }
+        .sheet(isPresented: $showingImport) {
+            ImportView()
+        }
+        .task {
+            // Initialize LoggingManager with model context from environment
+            // This ensures setup happens when the view appears and has access to the environment modelContext
+            LoggingManager.shared.setupActivityLogger(modelContext: modelContext)
         }
     }
     
@@ -236,6 +261,57 @@ struct ContentView: View {
                         )
                         }
                         .buttonStyle(PlainButtonStyle())
+                        
+                        Divider()
+                            .padding(.vertical, 4)
+                        
+                        Button(action: {
+                            showingExport = true
+                        }) {
+                        HStack(spacing: 12) {
+                            Image(systemName: "square.and.arrow.up")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.blue)
+                                .frame(width: 20, height: 20)
+                            
+                            Text("Export Data")
+                                    .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(.primary)
+                            
+                                Spacer()
+                            }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.blue.opacity(0.1))
+                        )
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        
+                        Button(action: {
+                            showingImport = true
+                        }) {
+                        HStack(spacing: 12) {
+                            Image(systemName: "square.and.arrow.down")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.green)
+                                .frame(width: 20, height: 20)
+                            
+                            Text("Import Data")
+                                    .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(.primary)
+                            
+                                Spacer()
+                            }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.green.opacity(0.1))
+                        )
+                        }
+                        .buttonStyle(PlainButtonStyle())
                     
                     Button(action: {
                         // Logout action
@@ -332,7 +408,15 @@ struct ContentView: View {
                             }
                             .buttonStyle(PlainButtonStyle())
                             
-                            Button(action: { showingAddClaim = true }) {
+                            Button(action: {
+                                if veterans.isEmpty {
+                                    // Navigate to veterans section if no veterans exist
+                                    selectedSection = .veterans
+                                } else {
+                                    // Show veteran selector for claim
+                                    showingVeteranSelectorForClaim = true
+                                }
+                            }) {
                                 Image(systemName: "doc.badge.plus")
                                     .font(.system(size: 16, weight: .medium))
                                     .foregroundColor(.green)
@@ -340,8 +424,17 @@ struct ContentView: View {
                                     .background(.green.opacity(0.1), in: Circle())
                             }
                             .buttonStyle(PlainButtonStyle())
+                            .help("Add Claim")
                             
-                            Button(action: { showingDocumentUpload = true }) {
+                            Button(action: {
+                                if veterans.isEmpty {
+                                    // Navigate to veterans section if no veterans exist
+                                    selectedSection = .veterans
+                                } else {
+                                    // Navigate to documents section where they can upload
+                                    selectedSection = .documents
+                                }
+                            }) {
                                 Image(systemName: "folder.badge.plus")
                                     .font(.system(size: 16, weight: .medium))
                                     .foregroundColor(.orange)
@@ -349,6 +442,7 @@ struct ContentView: View {
                                     .background(.orange.opacity(0.1), in: Circle())
                             }
                             .buttonStyle(PlainButtonStyle())
+                            .help("Upload Document")
                         }
                     }
                     .padding(.horizontal, 20)
@@ -691,9 +785,8 @@ struct DocumentsListView: View {
     @Query private var veterans: [Veteran]
     
     @State private var showingVeteranSelector = false
-    @State private var showingDocumentUpload = false
-    @State private var showingNewFolder = false
-    @State private var selectedVeteran: Veteran?
+    @State private var veteranForUpload: Veteran?
+    @State private var veteranForNewFolder: Veteran?
     @State private var actionType: DocumentActionType = .upload
     
     enum DocumentActionType {
@@ -775,31 +868,26 @@ struct DocumentsListView: View {
             VeteranSelectorView(
                 veterans: veterans,
                 onVeteranSelected: { veteran in
-                    selectedVeteran = veteran
                     showingVeteranSelector = false
                     if actionType == .upload {
-                        showingDocumentUpload = true
+                        veteranForUpload = veteran
                     } else {
-                        showingNewFolder = true
+                        veteranForNewFolder = veteran
                     }
                 }
             )
             .frame(minWidth: 600, idealWidth: 700, maxWidth: 800)
             .frame(minHeight: 500, idealHeight: 600, maxHeight: 700)
         }
-        .sheet(isPresented: $showingDocumentUpload) {
-            if let veteran = selectedVeteran {
-                DocumentUploadView(veteran: veteran, claim: nil)
-                    .frame(minWidth: 1000, idealWidth: 1200, maxWidth: 1400)
-                    .frame(minHeight: 600, idealHeight: 800, maxHeight: 1000)
-            }
+        .sheet(item: $veteranForUpload) { veteran in
+            DocumentUploadView(veteran: veteran, claim: nil)
+                .frame(minWidth: 1000, idealWidth: 1200, maxWidth: 1400)
+                .frame(minHeight: 700, idealHeight: 800, maxHeight: 1000)
         }
-        .sheet(isPresented: $showingNewFolder) {
-            if let veteran = selectedVeteran {
-                NewFolderView(veteran: veteran)
-                    .frame(minWidth: 600, idealWidth: 700, maxWidth: 800)
-                    .frame(minHeight: 400, idealHeight: 500, maxHeight: 600)
-            }
+        .sheet(item: $veteranForNewFolder) { veteran in
+            NewFolderView(veteran: veteran)
+                .frame(minWidth: 600, idealWidth: 700, maxWidth: 800)
+                .frame(minHeight: 400, idealHeight: 500, maxHeight: 600)
         }
     }
     
@@ -1170,81 +1258,6 @@ struct VeteranSelectorView: View {
                 alignment: .top
             )
         }
-    }
-}
-
-// MARK: - Veteran Selection Row
-struct VeteranSelectionRow: View {
-    let veteran: Veteran
-    let isSelected: Bool
-    let onTap: () -> Void
-    
-    var body: some View {
-        Button(action: onTap) {
-            HStack(spacing: 12) {
-                // Selection Indicator
-                ZStack {
-                    Circle()
-                        .fill(isSelected ? .blue : .clear)
-                        .frame(width: 24, height: 24)
-                        .overlay(
-                            Circle()
-                                .stroke(isSelected ? .blue : .gray.opacity(0.3), lineWidth: 2)
-                        )
-                    
-                    if isSelected {
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundColor(.white)
-                    }
-                }
-                
-                // Veteran Icon
-                ZStack {
-                    Circle()
-                        .fill(.blue.gradient)
-                        .frame(width: 40, height: 40)
-                    
-                    Image(systemName: "person.fill")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.white)
-                }
-                
-                // Veteran Info
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(veteran.fullName)
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(.primary)
-                    
-                    HStack(spacing: 12) {
-                        if !veteran.veteranId.isEmpty {
-                            Text("ID: \(veteran.veteranId)")
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(.secondary)
-                        }
-                        
-                        if !veteran.emailPrimary.isEmpty {
-                            Text(veteran.emailPrimary)
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                }
-                
-                Spacer()
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(isSelected ? Color.blue.opacity(0.1) : Color.clear)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(isSelected ? .blue.opacity(0.5) : .clear, lineWidth: 2)
-                    )
-            )
-        }
-        .buttonStyle(PlainButtonStyle())
     }
 }
 
